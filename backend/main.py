@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 from db import db, is_real_mongo
 from mock_data import seed_db
-from agent import run_concierge_agent
+from agent import run_concierge_agent, clear_adk_session
 from mcp_server import reschedule_booking, generate_itinerary
 
 load_dotenv()
@@ -198,6 +198,8 @@ async def reset_simulation():
             
         # Seed
         seed_db()
+        # Clear ADK session
+        clear_adk_session("g1")
         return {"status": "success", "message": "Database and itinerary reset to initial seeded state."}
     except Exception as e:
         logger.error(f"Error resetting database: {e}")

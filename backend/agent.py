@@ -1,6 +1,8 @@
 import os
 import logging
-from google import genai
+import datetime
+from google.adk import Agent, Runner
+from google.adk.sessions import InMemorySessionService
 from google.genai import types
 from dotenv import load_dotenv
 
@@ -10,18 +12,6 @@ from mcp_server import get_tours, get_bookings, check_weather, reschedule_bookin
 load_dotenv()
 
 logger = logging.getLogger("agent")
-
-# Lazy initialization of Gemini client to prevent startup failure when key is not yet provided
-client = None
-
-def get_client():
-    global client
-    if client is None:
-        api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY is not set. Please add it to your backend/.env file.")
-        client = genai.Client(api_key=api_key)
-    return client
 
 SYSTEM_PROMPT = """You are the Bocas del Toro Eco-Tourism Concierge & Logistics Dispatcher.
 Your persona is warm, welcoming, and hospitable, reflecting the authentic Afro-Caribbean local spirit of Bocas del Toro, Panama.
@@ -47,113 +37,109 @@ Respect the guest's constraints:
 - Slot capacity: Do not book tours that have 0 slots left.
 """
 
-# Map function names to their python references
-TOOLS_MAP = {
-    "get_tours": get_tours,
-    "get_bookings": get_bookings,
-    "check_weather": check_weather,
-    "reschedule_booking": reschedule_booking,
-    "generate_itinerary": generate_itinerary
-}
+# Lazy initialization of ADK Agent and Runner to prevent startup failure when API key is not set
+session_service = InMemorySessionService()
+runner = None
 
-def execute_tool(name: str, args: dict) -> str:
-    """Helper to execute a tool by name with arguments."""
-    tool_func = TOOLS_MAP.get(name)
-    if not tool_func:
-        return f"Error: Tool '{name}' not found."
-    
+def get_runner():
+    global runner
+    if runner is None:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY is not set. Please add it to your backend/.env file.")
+        
+        adk_agent = Agent(
+            name="BocasEcoConciergeAgent",
+            model="gemini-2.5-flash",
+            instruction=SYSTEM_PROMPT,
+            tools=[get_tours, get_bookings, check_weather, reschedule_booking, generate_itinerary]
+        )
+        
+        runner = Runner(
+            agent=adk_agent,
+            app_name="BocasConciergeApp",
+            session_service=session_service,
+            auto_create_session=True
+        )
+    return runner
+
+def clear_adk_session(guest_id: str):
+    """Deletes the ADK sessions associated with the user/guest to start fresh."""
     try:
-        # Pydantic or dict conversion may be needed
-        # Since arguments are passed as a dictionary, we unpack them
-        return tool_func(**args)
+        session_id = f"session_{guest_id}"
+        # We use session_service.delete_session_sync to delete the session in memory.
+        session_service.delete_session_sync(
+            app_name="BocasConciergeApp",
+            user_id=guest_id,
+            session_id=session_id
+        )
+        logger.info(f"Deleted ADK session '{session_id}' for guest '{guest_id}'.")
     except Exception as e:
-        logger.error(f"Error executing tool {name}: {e}")
-        return f"Error executing tool '{name}': {str(e)}"
+        logger.error(f"Error deleting ADK session: {e}")
 
 def run_concierge_agent(guest_id: str, user_message: str, history: list = None) -> tuple[str, list]:
     """
-    Runs the Gemini Agent loop for a guest chat session.
+    Runs the Gemini ADK Agent loop for a guest chat session.
     Returns:
         - final_response (str): The text response from the agent.
         - thinking_logs (list): A list of strings showing what tools were called and what they returned.
     """
     clear_execution_logs()
-    thinking_logs = []
     
-    # 1. Setup conversation history/contents
-    contents = []
-    
-    if history:
-        for msg in history:
-            role = msg.get("role")
-            text = msg.get("text")
-            if role and text:
-                contents.append(types.Content(role=role, parts=[types.Part.from_text(text=text)]))
-                
-    # Append current user prompt
-    # Inject guest context silently in the background to ground the agent with today's date
-    import datetime
+    try:
+        current_runner = get_runner()
+    except ValueError as ve:
+        logger.error(str(ve))
+        return "Respect, my friend! I need a valid `GEMINI_API_KEY` to talk to you. Please set it up in the `backend/.env` file and let's get going! 🌴", list(execution_logs)
+
+    session_id = f"session_{guest_id}"
+
+    # If the history is empty, clear the ADK session so that we start fresh.
+    if not history:
+        clear_adk_session(guest_id)
+
+    # In ADK, we construct a types.Content object as the new user message.
+    # We inject the guest context context silently in the background.
     current_date = datetime.date.today().strftime("%Y-%m-%d")
     contextualized_prompt = f"[Guest Context: guest_id='{guest_id}', current_date='{current_date}']\nUser message: {user_message}"
-    contents.append(types.Content(role="user", parts=[types.Part.from_text(text=contextualized_prompt)]))
     
-    # 2. Run the tool-calling execution loop (max 8 iterations to prevent infinite loops)
-    max_iterations = 8
-    for i in range(max_iterations):
-        logger.info(f"Agent iteration {i+1}...")
-        try:
-            current_client = get_client()
-        except ValueError as ve:
-            logger.error(str(ve))
-            return "Respect, my friend! I need a valid `GEMINI_API_KEY` to talk to you. Please set it up in the `backend/.env` file and let's get going! 🌴", list(execution_logs)
+    new_message = types.Content(
+        role="user",
+        parts=[types.Part.from_text(text=contextualized_prompt)]
+    )
 
-        try:
-            # We use gemini-2.5-flash for fast reasoning and function calling
-            response = current_client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    system_instruction=SYSTEM_PROMPT,
-                    temperature=0.3,
-                    # Provide the python functions directly as tools
-                    tools=[get_tours, get_bookings, check_weather, reschedule_booking, generate_itinerary]
-                )
-            )
-        except Exception as e:
-            logger.error(f"Gemini API generation failed: {e}")
-            return f"I'm having a brief connection issue with my island signals, my friend. Let's try again in a moment. (Error: {str(e)})", list(execution_logs)
+    try:
+        # Run ADK agent turn
+        events = current_runner.run(
+            user_id=guest_id,
+            session_id=session_id,
+            new_message=new_message
+        )
+        
+        events_list = list(events)
+        final_text = ""
+        
+        # Extract the final response text from the events list
+        for event in events_list:
+            if event.is_final_response() and event.content and event.content.parts:
+                text_parts = [part.text for part in event.content.parts if part.text]
+                if text_parts:
+                    final_text = "".join(text_parts)
+                    
+        # Fallback if no is_final_response event has content
+        if not final_text:
+            for event in reversed(events_list):
+                if event.content and event.content.parts and event.content.role == "model":
+                    text_parts = [part.text for part in event.content.parts if part.text]
+                    if text_parts:
+                        final_text = "".join(text_parts)
+                        break
+                        
+        if not final_text:
+            final_text = "I processed your request, my friend. Let me know what else I can do for you. Pura vida! 🌴"
+            
+        return final_text, list(execution_logs)
 
-        # Check if the model returned function calls
-        if response.function_calls:
-            # Add the model's message (which contains the function calls) to history
-            contents.append(response.candidates[0].content)
-            
-            tool_responses = []
-            for call in response.function_calls:
-                tool_name = call.name
-                tool_args = call.args or {}
-                
-                # Format arguments for logging
-                args_str = ", ".join(f"{k}={v}" for k, v in tool_args.items())
-                thinking_logs.append(f"🔍 Agent decided to call **{tool_name}({args_str})**")
-                
-                # Execute the tool
-                tool_result = execute_tool(tool_name, tool_args)
-                
-                thinking_logs.append(f"📥 Tool **{tool_name}** returned: {tool_result}")
-                
-                # Append tool output to the parts list
-                part = types.Part.from_function_response(
-                    name=tool_name,
-                    response={"result": str(tool_result)}
-                )
-                tool_responses.append(part)
-            
-            # Append the user role message containing tool responses back to the model
-            contents.append(types.Content(role="user", parts=tool_responses))
-        else:
-            # No function call, we got our final text response
-            final_text = response.text or "I'm processing that for you, no stress."
-            return final_text, list(execution_logs)
-            
-    return "I completed my planning checks, my friend. What can I do for you next?", list(execution_logs)
+    except Exception as e:
+        logger.error(f"ADK Runner execution failed: {e}")
+        return f"I'm having a brief connection issue with my island signals, my friend. Let's try again in a moment. (Error: {str(e)})", list(execution_logs)
