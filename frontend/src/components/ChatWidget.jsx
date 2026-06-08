@@ -57,10 +57,11 @@ export default function ChatWidget({
           messages.map((msg, index) => {
             const isUser = msg.role === 'user';
             
+            const b1 = bookings.find(b => b._id === 'b1');
             const showProposalCard = !isUser && 
                                      index === messages.length - 1 && 
                                      isProposalMessage(msg.text) &&
-                                     bookings.some(b => b.status === 'confirmed' && b.tour_id === 't1' && b.date === '2026-05-30');
+                                     b1 && b1.status === 'confirmed' && b1.tour_id === 't1';
 
             return (
               <div 
@@ -105,12 +106,12 @@ export default function ChatWidget({
                         ⛈️ Weather Replan Proposal
                       </div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)' }}>
-                        Swap **Cayos Zapatilla Snorkeling** (Outdoor - May 30) for **Green Cacao Chocolate Workshop** (Indoor Alternative).
+                        Swap **Cayos Zapatilla Snorkeling** (Outdoor - {b1 ? b1.date : ''}) for **Green Cacao Chocolate Workshop** (Indoor Alternative).
                       </div>
                       <div style={{ display: 'flex', gap: '10px' }}>
                         <button 
                           className="btn-primary" 
-                          onClick={() => onRespondProposal('b1', '2026-05-30', 't4', true)}
+                          onClick={() => onRespondProposal('b1', b1.date, 't4', true)}
                           style={{ 
                             flex: 1, 
                             padding: '6px 12px', 
@@ -123,7 +124,7 @@ export default function ChatWidget({
                         </button>
                         <button 
                           className="btn-secondary" 
-                          onClick={() => onRespondProposal('b1', '2026-05-30', null, false)}
+                          onClick={() => onRespondProposal('b1', b1.date, null, false)}
                           style={{ flex: 1, padding: '6px 12px', fontSize: '0.8rem' }}
                         >
                           Keep Snorkeling

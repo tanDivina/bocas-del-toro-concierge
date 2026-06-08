@@ -7,9 +7,16 @@ export default function ControlPanel({
   agentLogs, 
   loading 
 }) {
-  const [selectedDate, setSelectedDate] = useState('2026-05-30');
+  const sortedLogistics = logistics ? [...logistics].sort((a, b) => a.date.localeCompare(b.date)) : [];
+  const [selectedDate, setSelectedDate] = useState('');
   const [selectedWeather, setSelectedWeather] = useState('Heavy Rain');
   const [selectedAlert, setSelectedAlert] = useState('rain_warning');
+
+  React.useEffect(() => {
+    if (sortedLogistics.length > 0 && (!selectedDate || !sortedLogistics.some(l => l.date === selectedDate))) {
+      setSelectedDate(sortedLogistics[0].date);
+    }
+  }, [logistics]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -48,10 +55,9 @@ export default function ControlPanel({
                 transition: 'background-color 0.8s ease, color 0.5s ease'
               }}
             >
-              <option value="2026-05-30">May 30, 2026</option>
-              <option value="2026-05-31">May 31, 2026</option>
-              <option value="2026-06-01">June 01, 2026</option>
-              <option value="2026-06-02">June 02, 2026</option>
+              {sortedLogistics.map(log => (
+                <option key={log.date} value={log.date}>{log.date}</option>
+              ))}
             </select>
           </div>
 

@@ -1,7 +1,9 @@
 import React from 'react';
 
 export default function ScheduleView({ bookings, tours, logistics }) {
-  const dates = ["2026-05-30", "2026-05-31", "2026-06-01", "2026-06-02"];
+  const dates = logistics && logistics.length > 0
+    ? [...logistics].sort((a, b) => a.date.localeCompare(b.date)).map(l => l.date)
+    : ["2026-05-30", "2026-05-31", "2026-06-01", "2026-06-02"];
 
   const getBookingForSlot = (date, slot) => {
     const booking = bookings.find(b => b.date === date && b.slot === slot);
@@ -26,7 +28,7 @@ export default function ScheduleView({ bookings, tours, logistics }) {
           🏝 ... Stay Schedule Timeline
         </h2>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-          Alex Mercer's 4-day itinerary slots (May 30 - June 2).
+          Alex Mercer's 4-day itinerary slots.
         </p>
       </div>
 
