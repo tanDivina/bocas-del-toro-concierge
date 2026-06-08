@@ -48,7 +48,7 @@ export default function ChatWidget({
         {messages.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px', color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>
             <span style={{ fontSize: '2.5rem' }}>👋</span>
-            <div style={{ fontWeight: 500, fontSize: '1.1rem', color: 'white' }}>Welcome to Bocas del Toro!</div>
+            <div style={{ fontWeight: 500, fontSize: '1.1rem', color: 'var(--text-primary)' }}>Welcome to Bocas del Toro!</div>
             <p style={{ fontSize: '0.85rem', maxWidth: '320px' }}>
               I am your local concierge, my friend. I've scheduled your activities. Talk to me if you want to check, reschedule, or look for local recommendations!
             </p>
@@ -74,11 +74,11 @@ export default function ChatWidget({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '80%' }}>
                   <div 
                     style={{ 
-                      background: isUser ? 'hsl(222, 40%, 15%)' : 'hsl(222, 47%, 10%)',
+                      background: isUser ? 'var(--msg-user-bg)' : 'var(--msg-agent-bg)',
                       border: isUser ? '1px solid var(--border-color)' : '1px solid hsla(168, 76%, 42%, 0.2)',
                       borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                       padding: '12px 16px',
-                      color: 'white',
+                      color: 'var(--text-primary)',
                       fontSize: '0.9rem',
                       whiteSpace: 'pre-wrap',
                       boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
@@ -140,7 +140,7 @@ export default function ChatWidget({
         {loading && (
           <div style={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
             <div style={{ 
-              background: 'hsl(222, 47%, 10%)',
+              background: 'var(--msg-agent-bg)',
               border: '1px solid var(--border-color)',
               borderRadius: '16px 16px 16px 4px',
               padding: '12px 16px',
@@ -158,7 +158,7 @@ export default function ChatWidget({
       </div>
 
       {/* Input bar */}
-      <form onSubmit={handleSubmit} style={{ padding: '16px', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '10px', background: 'hsl(222, 47%, 7%)' }}>
+      <form onSubmit={handleSubmit} style={{ padding: '16px', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '10px', background: 'var(--panel-bg)' }}>
         <input 
           type="text" 
           value={input}
@@ -167,10 +167,10 @@ export default function ChatWidget({
           disabled={loading}
           style={{
             flex: 1,
-            background: 'hsl(222, 40%, 12%)',
+            background: 'var(--slot-bg)',
             border: '1px solid var(--border-color)',
             borderRadius: '8px',
-            color: 'white',
+            color: 'var(--text-primary)',
             padding: '10px 16px',
             fontSize: '0.9rem',
             outline: 'none',

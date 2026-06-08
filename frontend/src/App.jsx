@@ -21,6 +21,24 @@ function App() {
     fetchStatus();
   }, []);
 
+  // Handle automatic theme adjustment depending on forecast alerts
+  useEffect(() => {
+    if (logistics && logistics.length > 0) {
+      const hasRainAlert = logistics.some(l => l.alert === 'rain_warning');
+      if (hasRainAlert) {
+        document.body.classList.remove('theme-sunny');
+        document.body.classList.add('theme-rainy');
+      } else {
+        document.body.classList.remove('theme-rainy');
+        document.body.classList.add('theme-sunny');
+      }
+    } else {
+      // Fallback/Default
+      document.body.classList.remove('theme-rainy');
+      document.body.classList.add('theme-sunny');
+    }
+  }, [logistics]);
+
   const fetchStatus = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/status`);

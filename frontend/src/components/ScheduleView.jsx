@@ -40,18 +40,19 @@ export default function ScheduleView({ bookings, tours, logistics }) {
             <div 
               key={date} 
               style={{ 
-                background: 'hsl(222, 40%, 8%)', 
+                background: 'var(--slot-bg)', 
                 borderRadius: '12px', 
                 border: hasRainAlert ? '1px solid var(--warning)' : '1px solid var(--border-color)',
                 padding: '12px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '12px',
-                position: 'relative'
+                position: 'relative',
+                transition: 'background-color 0.8s ease, border-color 0.8s ease'
               }}
             >
               {/* Day Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid hsla(222, 30%, 25%, 0.5)', paddingBottom: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
                 <div>
                   <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{date}</div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -111,7 +112,7 @@ export default function ScheduleView({ bookings, tours, logistics }) {
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'white', lineHeight: '1.2' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: '1.2' }}>
                             {slotData.tour?.name || 'Loading tour...'}
                           </span>
                         </div>
@@ -140,14 +141,15 @@ export default function ScheduleView({ bookings, tours, logistics }) {
                     ) : (
                       <div 
                         style={{ 
-                          background: 'hsl(222, 40%, 4%)', 
+                          background: 'var(--slot-empty-bg)', 
                           border: '1px dashed var(--border-color)', 
                           borderRadius: '8px',
                           padding: '10px',
                           fontSize: '0.75rem',
                           color: 'var(--text-dim)',
                           fontStyle: 'italic',
-                          textAlign: 'center'
+                          textAlign: 'center',
+                          transition: 'background-color 0.8s ease, border-color 0.8s ease'
                         }}
                       >
                         Empty Slot

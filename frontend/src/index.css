@@ -24,6 +24,74 @@
   --font-serif: 'Playfair Display', serif;
   
   --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  
+  /* Additional Slots & Message bubble colors */
+  --slot-bg: hsl(222, 40%, 15%);
+  --slot-empty-bg: hsl(222, 40%, 8%);
+  --msg-user-bg: hsl(222, 40%, 15%);
+  --msg-agent-bg: hsl(222, 47%, 10%);
+}
+
+/* Sunny Mode (Light / Tropical Sand) */
+body.theme-sunny {
+  --bg-color: hsl(45, 60%, 95%);       /* Tropical warm sand cream */
+  --panel-bg: hsla(45, 40%, 88%, 0.8);
+  --border-color: hsla(45, 20%, 72%, 0.4);
+  --border-glow: hsla(168, 76%, 35%, 0.15);
+  
+  --primary: hsl(168, 76%, 30%);      /* Sea Emerald (darker for contrast) */
+  --primary-glow: hsla(168, 76%, 30%, 0.1);
+  --accent: hsl(198, 86%, 32%);       /* Sea Lagoon (darker for contrast) */
+  --accent-glow: hsla(198, 86%, 32%, 0.1);
+  --warning: hsl(28, 92%, 45%);       /* Sunset Gold */
+  --warning-glow: hsla(28, 92%, 45%, 0.1);
+  --error: hsl(346, 84%, 48%);
+  --error-glow: hsla(346, 84%, 48%, 0.1);
+  
+  --text-primary: hsl(222, 47%, 12%); /* Dark slate for high contrast */
+  --text-muted: hsl(222, 20%, 35%);
+  --text-dim: hsl(222, 12%, 50%);
+  
+  --slot-bg: hsla(45, 30%, 93%, 0.9);
+  --slot-empty-bg: hsla(45, 30%, 90%, 0.4);
+  --msg-user-bg: hsla(168, 76%, 30%, 0.12);
+  --msg-agent-bg: hsla(45, 30%, 84%, 0.5);
+  --shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.08);
+  
+  background-image: 
+    radial-gradient(at 10% 10%, hsla(168, 76%, 35%, 0.08) 0px, transparent 50%),
+    radial-gradient(at 90% 90%, hsla(38, 92%, 50%, 0.12) 0px, transparent 50%);
+}
+
+/* Rainy Mode (Cozy Stormy Dark) */
+body.theme-rainy {
+  --bg-color: hsl(222, 60%, 4%);       /* Stormy dark blue */
+  --panel-bg: hsla(222, 47%, 11%, 0.6);
+  --border-color: hsla(222, 30%, 25%, 0.4);
+  --border-glow: hsla(188, 86%, 43%, 0.25);
+  
+  --primary: hsl(168, 76%, 42%);
+  --primary-glow: hsla(168, 76%, 42%, 0.15);
+  --accent: hsl(188, 86%, 43%);
+  --accent-glow: hsla(188, 86%, 43%, 0.15);
+  --warning: hsl(38, 92%, 50%);
+  --warning-glow: hsla(38, 92%, 50%, 0.15);
+  --error: hsl(346, 84%, 61%);
+  --error-glow: hsla(346, 84%, 61%, 0.15);
+  
+  --text-primary: hsl(210, 40%, 98%);
+  --text-muted: hsl(215, 20%, 65%);
+  --text-dim: hsl(215, 12%, 45%);
+  
+  --slot-bg: hsl(222, 40%, 8%);
+  --slot-empty-bg: hsl(222, 40%, 4%);
+  --msg-user-bg: hsl(222, 40%, 15%);
+  --msg-agent-bg: hsl(222, 47%, 10%);
+  --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  
+  background-image: 
+    radial-gradient(at 10% 10%, hsla(222, 76%, 15%, 0.3) 0px, transparent 50%),
+    radial-gradient(at 90% 90%, hsla(188, 86%, 43%, 0.05) 0px, transparent 50%);
 }
 
 * {
@@ -43,6 +111,7 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   line-height: 1.5;
+  transition: background-color 0.8s ease, color 0.5s ease, border-color 0.8s ease, background-image 0.8s ease;
 }
 
 /* Glassmorphism Card */
@@ -53,7 +122,7 @@ body {
   border: 1px solid var(--border-color);
   border-radius: 16px;
   box-shadow: var(--shadow);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.8s ease, border-color 0.8s ease, box-shadow 0.8s ease;
 }
 
 .glass-card:hover {

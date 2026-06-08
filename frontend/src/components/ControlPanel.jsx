@@ -39,12 +39,13 @@ export default function ControlPanel({
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               style={{
-                background: 'hsl(222, 40%, 15%)',
+                background: 'var(--slot-bg)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '6px',
-                color: 'white',
+                color: 'var(--text-primary)',
                 padding: '8px',
-                fontSize: '0.9rem'
+                fontSize: '0.9rem',
+                transition: 'background-color 0.8s ease, color 0.5s ease'
               }}
             >
               <option value="2026-05-30">May 30, 2026</option>
@@ -60,12 +61,13 @@ export default function ControlPanel({
               value={selectedWeather}
               onChange={(e) => setSelectedWeather(e.target.value)}
               style={{
-                background: 'hsl(222, 40%, 15%)',
+                background: 'var(--slot-bg)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '6px',
-                color: 'white',
+                color: 'var(--text-primary)',
                 padding: '8px',
-                fontSize: '0.9rem'
+                fontSize: '0.9rem',
+                transition: 'background-color 0.8s ease, color 0.5s ease'
               }}
             >
               <option value="Sunny">Sunny ☀️</option>
@@ -81,12 +83,13 @@ export default function ControlPanel({
             value={selectedAlert}
             onChange={(e) => setSelectedAlert(e.target.value)}
             style={{
-              background: 'hsl(222, 40%, 15%)',
+              background: 'var(--slot-bg)',
               border: '1px solid var(--border-color)',
               borderRadius: '6px',
-              color: 'white',
+              color: 'var(--text-primary)',
               padding: '8px',
-              fontSize: '0.9rem'
+              fontSize: '0.9rem',
+              transition: 'background-color 0.8s ease, color 0.5s ease'
             }}
           >
             <option value="none">None (Optimal Conditions)</option>
@@ -120,7 +123,7 @@ export default function ControlPanel({
         <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Active Weather Board</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {logistics && logistics.map((log) => (
-            <div key={log.date} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 12px', background: 'hsl(222, 40%, 8%)', borderRadius: '6px', fontSize: '0.85rem' }}>
+            <div key={log.date} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 12px', background: 'var(--slot-empty-bg)', borderRadius: '6px', fontSize: '0.85rem', transition: 'background-color 0.8s ease' }}>
               <span style={{ color: 'var(--text-primary)' }}>{log.date}</span>
               <span style={{ 
                 color: log.weather === 'Heavy Rain' ? 'var(--error)' : (log.weather === 'Rainy' ? 'var(--warning)' : 'var(--primary)'),
