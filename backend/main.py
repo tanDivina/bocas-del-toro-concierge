@@ -1,5 +1,6 @@
 import os
 import logging
+import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -54,6 +55,23 @@ class ProposalPayload(BaseModel):
 async def get_status():
     """Retrieve full database state for frontend visualization."""
     try:
+        # Auto-refresh database if dates are in the past relative to today
+        today_str = datetime.date.today().strftime("%Y-%m-%d")
+        first_logistic = db["logistics"].find_one({}, sort=[("date", 1)])
+        if first_logistic and first_logistic.get("date", "") < today_str:
+            logger.info("Seeded dates are in the past. Automatically resetting database to current dates...")
+            db["tours"].delete_many({})
+            db["guests"].delete_many({})
+            db["bookings"].delete_many({})
+            db["logistics"].delete_many({})
+            if os.path.exists("mock_itinerary.md"):
+                try:
+                    os.remove("mock_itinerary.md")
+                except Exception:
+                    pass
+            seed_db()
+            clear_adk_session("g1")
+
         tours = list(db["tours"].find({}))
         bookings = list(db["bookings"].find({}))
         guests = list(db["guests"].find({}))
