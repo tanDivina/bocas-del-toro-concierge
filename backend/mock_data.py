@@ -130,6 +130,36 @@ def get_tours_data(dates):
                 dates["d2"]: 20
             },
             "tags": ["culture", "history", "indoor"]
+        },
+        {
+            "_id": "t8",
+            "name": "Finca Natural Regenerative Farm Tour",
+            "location": "Isla Solarte",
+            "description": "An educational-focused regenerative farm tour. Explore the covered animal zone and reforestation paths. Visit the 40x20 bamboo welcome center with a full roof to taste home-brewed herbal teas, sample fresh tropical fruits, and try hand-crafted plant elixirs.",
+            "type": "indoor",
+            "price": 30.0,
+            "capacity": 12,
+            "available_slots": {
+                dates["d0"]: 12,
+                dates["d1"]: 12,
+                dates["d2"]: 12
+            },
+            "tags": ["indoor", "food", "culture", "farm", "nature"]
+        },
+        {
+            "_id": "t9",
+            "name": "Texas Hold'em Poker at JJ's",
+            "location": "JJ's (Bocas Town)",
+            "description": "Join the local community for Texas Hold'em Poker, held on Thursdays at 12:00. Play two or three games across up to 3 tables under a fully covered deck. $10.00 buy-in.",
+            "type": "indoor",
+            "price": 10.0,
+            "capacity": 15,
+            "available_slots": {
+                dates["d0"]: 15,
+                dates["d1"]: 15,
+                dates["d2"]: 15
+            },
+            "tags": ["indoor", "social", "games", "culture"]
         }
     ]
 
