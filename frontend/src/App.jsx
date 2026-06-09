@@ -1023,7 +1023,7 @@ function App() {
                 <circle cx="8.5" cy="7" r="4" />
                 <polyline points="17 11 19 13 23 9" />
               </svg>
-              🔌 Simple Check-In Portal (No PMS)
+              Simple Check-In Portal (No PMS)
             </button>
             <button 
               onClick={() => setIntegrationTab('webhook')}
@@ -1048,7 +1048,7 @@ function App() {
                 <line x1="2" y1="12" x2="22" y2="12" />
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
               </svg>
-              ⚙️ Real-time Webhooks & API
+              Real-time Webhooks & API
             </button>
             <button 
               onClick={() => setIntegrationTab('custom_tours')}
@@ -1071,7 +1071,7 @@ function App() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
               </svg>
-              🏝️ Register Custom Tours
+              Register Custom Tours
             </button>
           </div>
 
