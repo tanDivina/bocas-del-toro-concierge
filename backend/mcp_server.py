@@ -20,9 +20,9 @@ def add_execution_log(msg):
     execution_logs.append(msg)
 
 @mcp.tool()
-def get_tours() -> str:
-    """Retrieve all available eco-tourism tours and activities in Bocas del Toro, including indoor/outdoor status and pricing."""
-    add_execution_log("🔍 Agent decided to call **get_tours()**")
+def get_tours(guest_id: str = None) -> str:
+    """Retrieve all available eco-tourism tours and activities in Bocas del Toro, including indoor/outdoor status and pricing. Pass guest_id to automatically filter out tours they have already booked on any day of their stay."""
+    add_execution_log(f"🔍 Agent decided to call **get_tours(guest_id='{guest_id}')**")
     try:
         tours = list(db["tours"].find({}))
         if not tours:
@@ -30,8 +30,15 @@ def get_tours() -> str:
             add_execution_log(f"📥 Tool **get_tours** returned: {res}")
             return res
         
+        booked_tour_ids = set()
+        if guest_id:
+            bookings = list(db["bookings"].find({"guest_id": guest_id}))
+            booked_tour_ids = {b["tour_id"] for b in bookings}
+        
         output = "### Available Activities in Bocas del Toro:\n"
         for t in tours:
+            if t["_id"] in booked_tour_ids:
+                continue  # Absolutely retire and omit already booked activities!
             output += (
                 f"- **[{t['_id']}] {t['name']}**\n"
                 f"  * Location: {t['location']}\n"
@@ -40,7 +47,7 @@ def get_tours() -> str:
                 f"  * Price: ${t['price']}\n"
                 f"  * Tags: {', '.join(t.get('tags', []))}\n"
             )
-        add_execution_log("📥 Tool **get_tours** returned list of activities.")
+        add_execution_log(f"📥 Tool **get_tours** returned list of activities (filtered: {bool(guest_id)}).")
         return output
     except Exception as e:
         logger.error(f"Error getting tours: {e}")
@@ -254,6 +261,7 @@ def generate_itinerary(guest_id: str) -> str:
         
         output = (
             f"# Bocas del Toro Concierge Itinerary\n"
+            f"**Resort Stay:** {guest.get('hotel_name', 'Bocas Eco-Lodge')}\n"
             f"**Guest:** {guest['name']} | **Contact:** {guest['phone']}\n"
             f"**Stay Period:** {guest['stay_start']} to {guest['stay_end']}\n"
             f"**Preferences:** {', '.join(guest.get('preferences', []))}\n"
@@ -290,10 +298,10 @@ def generate_itinerary(guest_id: str) -> str:
         output += "*Thank you for choosing Bocas del Toro Eco-Tourism. Direct any questions to your island concierge.*"
         
         # Save itinerary file to disk as well
-        with open("mock_itinerary.md", "w") as f:
+        with open(f"mock_itinerary_{guest_id}.md", "w") as f:
             f.write(output)
             
-        add_execution_log("📥 Tool **generate_itinerary** completed and saved to mock_itinerary.md.")
+        add_execution_log("📥 Tool **generate_itinerary** completed and saved.")
         return output
     except Exception as e:
         res = f"Error generating itinerary: {str(e)}"

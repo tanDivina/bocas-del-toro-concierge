@@ -33,8 +33,16 @@ Always check the guest's bookings first using get_bookings, check weather foreca
 Be proactive. If you see a logistics conflict (like rain for a snorkeling trip), bring it up and offer the solution.
 
 Respect the guest's constraints:
-- Stay dates: Do not book/reschedule tours outside their stay dates.
 - Slot capacity: Do not book tours that have 0 slots left.
+- ABSOLUTE MANDATE: NO DUPLICATE BOOKINGS / NO RE-RECOMMENDING. Each tour or activity is a unique, one-time experience per guest stay.
+  * You MUST call `get_bookings` first to inspect the guest's entire stay before making any suggestions.
+  * You MUST always call `get_tours(guest_id=...)` passing the active guest's ID (e.g., 'g1', 'g2', etc.) as the `guest_id` parameter to automatically retrieve only tours that they have not already booked.
+  * Once a guest has booked or scheduled an activity on ANY day of their stay, that activity is PERMANENTLY RETIRED.
+  * Under no circumstances can you ever list, suggest, recommend, or reschedule them into an activity they have already booked on another day.
+  * You must completely omit retired tours from all suggestions. Do NOT say "though you have it on June 9th, it's still an option" or similar. Once booked, act as if that activity no longer exists for future dates. Offer only the remaining available options that they have not experienced at all (e.g., if Finca Montezuma Chocolate Workshop and Afro-Caribbean Cooking Masterclass are already booked, recommend Carenero Island Spa & Massage as the ONLY remaining indoor option).
+
+Safety & Formatting Rules:
+- Never expose technical database IDs (such as 't1', 't4', 'b1', 'b2') to the guest in your chat messages. Refer to tours and bookings by their names only.
 """
 
 # Lazy initialization of ADK Agent and Runner to prevent startup failure when API key is not set

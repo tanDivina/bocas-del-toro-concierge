@@ -5,14 +5,21 @@ export default function ChatWidget({
   onSendMessage, 
   onRespondProposal, 
   loading,
-  bookings
+  bookings,
+  tenantBrand
 }) {
   const [input, setInput] = useState('');
-  const messagesEndRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (containerRef.current) {
+      const container = containerRef.current;
+      const timer = setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [messages, loading]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -27,41 +34,94 @@ export default function ChatWidget({
     return lower.includes('reschedule') || lower.includes('swap') || lower.includes('alternative');
   };
 
+  const parseMessageText = (text) => {
+    if (!text) return '';
+    // Strip background guest context
+    let cleanText = text.replace(/\[Guest Context:.*?\]\n/g, '');
+    
+    // Split by markdown bold format and render segments accordingly
+    const parts = cleanText.split('**');
+    return parts.map((part, index) => {
+      if (index % 2 === 1) {
+        return <strong key={index} style={{ fontWeight: 650, color: 'var(--primary)' }}>{part}</strong>;
+      }
+      return part;
+    });
+  };
+
   return (
     <div className="glass-card" style={{ height: '550px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '16px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
-          🏝️
+      <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '14px', background: 'hsla(210, 32%, 7%, 0.4)' }}>
+        <div style={{ position: 'relative' }}>
+          <img 
+            src="/concierge_avatar.png" 
+            alt="Bocas Concierge Avatar" 
+            style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)', display: 'block' }}
+          />
+          <span style={{ 
+            position: 'absolute', 
+            bottom: '0', 
+            right: '0', 
+            width: '10px', 
+            height: '10px', 
+            borderRadius: '50%', 
+            background: 'hsl(188, 55%, 38%)', 
+            border: '2px solid var(--bg-color)',
+            boxShadow: '0 0 8px hsl(188, 55%, 38%)'
+          }}></span>
         </div>
         <div>
-          <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>Bocas Eco-Concierge</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', display: 'inline-block' }}></span>
-            Local Agent Active
+          <div style={{ fontWeight: 600, fontSize: '0.95rem', letterSpacing: '0.01em' }}>Bocas Eco-Concierge</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style={{ color: 'var(--primary)' }}>
+                <circle cx="12" cy="12" r="10" />
+              </svg>
+            </span>
+            Local Butler Dispatch Active
           </div>
         </div>
       </div>
 
-      {/* Messages area */}
-      <div style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Messages area with scroll isolation & anchoring */}
+      <div 
+        ref={containerRef}
+        style={{ 
+          flex: 1, 
+          padding: '20px', 
+          overflowY: 'auto', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '16px',
+          overscrollBehavior: 'contain',
+          overflowAnchor: 'none'
+        }}
+      >
         {messages.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px', color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>
-            <span style={{ fontSize: '2.5rem' }}>👋</span>
-            <div style={{ fontWeight: 500, fontSize: '1.1rem', color: 'var(--text-primary)' }}>Welcome to Bocas del Toro!</div>
-            <p style={{ fontSize: '0.85rem', maxWidth: '320px' }}>
-              I am your local concierge, my friend. I've scheduled your activities. Talk to me if you want to check, reschedule, or look for local recommendations!
-            </p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '16px', color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>
+            {/* Elegant Welcome Palm Tree SVG */}
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.85 }}>
+              <path d="M12 22c0-3.33-1-6.67-3-10" />
+              <path d="M12 2c4 1 7 4 7 8 0 1.5-.5 3-1.5 4" />
+              <path d="M12 2c1.5 3.5 4 6 7.5 7" />
+              <path d="M12 2C9 5.5 6 7 2 8" />
+              <circle cx="12" cy="22" r="1" />
+            </svg>
+            <div>
+              <div style={{ fontWeight: 500, fontSize: '1.15rem', color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', letterSpacing: '0.01em' }}>Welcome to Paradise</div>
+              <p style={{ fontSize: '0.85rem', maxWidth: '320px', color: 'var(--text-muted)', lineHeight: '1.6', marginTop: '6px', fontWeight: 300 }}>
+                {tenantBrand?.welcome_message || "I am your private island coordinator, my friend. Speak with me at any time to adjust schedules, manage excursions, or request weather replans."}
+              </p>
+            </div>
           </div>
         ) : (
           messages.map((msg, index) => {
             const isUser = msg.role === 'user';
-            
-            const b1 = bookings.find(b => b._id === 'b1');
-            const showProposalCard = !isUser && 
-                                     index === messages.length - 1 && 
-                                     isProposalMessage(msg.text) &&
-                                     b1 && b1.status === 'confirmed' && b1.tour_id === 't1';
+            const isProposal = !isUser && index === messages.length - 1 && isProposalMessage(msg.text);
+            const outdoorBookings = bookings.filter(b => b.status === 'confirmed');
+            const targetBooking = outdoorBookings.find(b => b.guest_id === (b.guest_id || 'g1'));
+            const showProposalCard = isProposal && targetBooking;
 
             return (
               <div 
@@ -72,62 +132,72 @@ export default function ChatWidget({
                   width: '100%'
                 }}
               >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '80%' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '82%' }}>
                   <div 
                     style={{ 
                       background: isUser ? 'var(--msg-user-bg)' : 'var(--msg-agent-bg)',
-                      border: isUser ? '1px solid var(--border-color)' : '1px solid hsla(168, 76%, 42%, 0.2)',
+                      border: isUser ? '1px solid hsla(38, 45%, 60%, 0.25)' : '1px solid var(--border-color)',
                       borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                      padding: '12px 16px',
+                      padding: '14px 18px',
                       color: 'var(--text-primary)',
-                      fontSize: '0.9rem',
+                      fontSize: '0.88rem',
+                      lineHeight: '1.5',
                       whiteSpace: 'pre-wrap',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.18)'
                     }}
                   >
-                    {msg.text && msg.text.replace(/\[Guest Context:.*?\]\n/g, '')}
+                    {parseMessageText(msg.text)}
                   </div>
 
                   {showProposalCard && (
                     <div 
                       className="glass-card" 
                       style={{ 
-                        padding: '16px', 
-                        background: 'hsla(38, 92%, 50%, 0.08)',
+                        padding: '18px', 
+                        background: 'hsla(35, 80%, 55%, 0.05)',
                         border: '1px solid var(--warning)',
-                        borderRadius: '12px',
+                        borderRadius: '14px',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '12px',
-                        boxShadow: '0 4px 15px rgba(245, 158, 11, 0.1)'
+                        gap: '14px',
+                        boxShadow: '0 8px 24px rgba(245, 158, 11, 0.08)'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--warning)', fontWeight: 600, fontSize: '0.85rem' }}>
-                        ⛈️ Weather Replan Proposal
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--warning)', fontWeight: 600, fontSize: '0.85rem', letterSpacing: '0.02em' }}>
+                        {/* Weather Alert SVG Line Icon */}
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 8.58" />
+                          <polyline points="13 11 9 17 12 17 10 23" />
+                        </svg>
+                        Weather Replan Dispatch
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)' }}>
-                        Swap **Cayos Zapatilla Snorkeling** (Outdoor - {b1 ? b1.date : ''}) for **Green Cacao Chocolate Workshop** (Indoor Alternative).
+                      <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: '1.5', fontWeight: 300 }}>
+                        We detected a logistical weather risk. Approve the proposal below to instantly swap this excursion for an available, covered substitute.
                       </div>
-                      <div style={{ display: 'flex', gap: '10px' }}>
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
                         <button 
                           className="btn-primary" 
-                          onClick={() => onRespondProposal('b1', b1.date, 't4', true)}
+                          onClick={() => onRespondProposal(targetBooking._id, targetBooking.date, 't4', true)}
                           style={{ 
                             flex: 1, 
-                            padding: '6px 12px', 
+                            padding: '8px 14px', 
                             fontSize: '0.8rem',
-                            background: 'linear-gradient(135deg, var(--warning), hsl(25, 95%, 50%))',
-                            boxShadow: '0 4px 10px rgba(245, 158, 11, 0.2)'
+                            background: 'linear-gradient(135deg, var(--warning), hsl(25, 95%, 45%))',
+                            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.25)',
+                            color: 'white'
                           }}
                         >
-                          ✅ Confirm Swap
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          Confirm Swap
                         </button>
                         <button 
                           className="btn-secondary" 
-                          onClick={() => onRespondProposal('b1', b1.date, null, false)}
-                          style={{ flex: 1, padding: '6px 12px', fontSize: '0.8rem' }}
+                          onClick={() => onRespondProposal(targetBooking._id, targetBooking.date, null, false)}
+                          style={{ flex: 1, padding: '8px 14px', fontSize: '0.8rem' }}
                         >
-                          Keep Snorkeling
+                          Keep Original
                         </button>
                       </div>
                     </div>
@@ -144,38 +214,42 @@ export default function ChatWidget({
               background: 'var(--msg-agent-bg)',
               border: '1px solid var(--border-color)',
               borderRadius: '16px 16px 16px 4px',
-              padding: '12px 16px',
+              padding: '12px 18px',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '8px',
               color: 'var(--text-muted)',
               fontSize: '0.85rem'
             }}>
-              <span className="dot-typing">💬 Concierge is planning...</span>
+              {/* Elegant Chat Bubble SVG Line Icon */}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}>
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span className="dot-typing" style={{ paddingRight: '18px' }}>Butler is planning</span>
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input bar */}
-      <form onSubmit={handleSubmit} style={{ padding: '16px', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '10px', background: 'var(--panel-bg)' }}>
+      {/* Input bar - No readOnly constraint to prevent keyboard layout shifts */}
+      <form onSubmit={handleSubmit} style={{ padding: '16px 20px', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '12px', background: 'hsla(210, 32%, 6%, 0.6)' }}>
         <input 
           type="text" 
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Message your island concierge..."
-          disabled={loading}
+          placeholder={loading ? "Butler is arranging..." : "Request island adjustments..."}
           style={{
             flex: 1,
             background: 'var(--slot-bg)',
             border: '1px solid var(--border-color)',
             borderRadius: '8px',
             color: 'var(--text-primary)',
-            padding: '10px 16px',
+            padding: '11px 16px',
             fontSize: '0.9rem',
             outline: 'none',
-            transition: 'border-color 0.2s ease'
+            transition: 'border-color 0.2s ease, opacity 0.2s ease',
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 300
           }}
           onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
           onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
@@ -183,9 +257,13 @@ export default function ChatWidget({
         <button 
           type="submit" 
           className="btn-primary" 
-          disabled={loading || !input.trim()}
-          style={{ padding: '10px 16px' }}
+          disabled={!input.trim() || loading}
+          style={{ padding: '11px 20px' }}
         >
+          <svg width="15" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
           Send
         </button>
       </form>
