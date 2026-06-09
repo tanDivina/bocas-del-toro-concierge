@@ -27,6 +27,7 @@ function App() {
   const [isSecureModeActive, setIsSecureModeActive] = useState(false);
   const [isSecureMode, setIsSecureMode] = useState(false);
   const [operatorFlyerToken, setOperatorFlyerToken] = useState('');
+  const lastGuestIdRef = React.useRef('g1');
 
   const [view, setView] = useState('landing');
 
@@ -118,12 +119,20 @@ function App() {
       
       const newMarkdown = data.itinerary_markdown || '';
       setItineraryMarkdown(prev => {
-        // Trigger the updated itinerary popup modal if we had an existing one and it is now updated
-        if (prev && newMarkdown && prev !== newMarkdown) {
-          setShowItineraryModal(true);
+        // Trigger the updated itinerary popup modal ONLY if the guest ID remains the same
+        // (This avoids triggering the modal merely when switching active guest profiles)
+        if (lastGuestIdRef.current === data.guest_id) {
+          if (prev && newMarkdown && prev !== newMarkdown) {
+            setShowItineraryModal(true);
+          }
         }
         return newMarkdown;
       });
+      
+      // Update our guest tracker ref with the newly loaded guest ID
+      if (data.guest_id) {
+        lastGuestIdRef.current = data.guest_id;
+      }
       
       setIsRealMongo(data.is_real_mongodb);
     } catch (error) {
