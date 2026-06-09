@@ -8,6 +8,28 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
   ? 'http://localhost:8000'
   : window.location.origin;
 
+// Synchronously parse query parameters to prevent mount-time state transitions and race conditions
+const getInitialParams = () => {
+  if (typeof window === 'undefined') {
+    return { view: 'landing', guestId: 'g1', token: null, secureActive: false, guestViewOnly: false };
+  }
+  const params = new URLSearchParams(window.location.search);
+  const urlToken = params.get('token');
+  const urlGuestId = params.get('guest_id');
+  const urlView = params.get('view');
+  
+  if (urlToken) {
+    return { view: 'guest', guestId: 'g1', token: urlToken, secureActive: true, guestViewOnly: true };
+  } else if (urlGuestId) {
+    return { view: 'guest', guestId: urlGuestId, token: null, secureActive: false, guestViewOnly: true };
+  } else if (urlView && ['landing', 'guest', 'operator', 'integrations'].includes(urlView)) {
+    return { view: urlView, guestId: 'g1', token: null, secureActive: false, guestViewOnly: false };
+  }
+  return { view: 'landing', guestId: 'g1', token: null, secureActive: false, guestViewOnly: false };
+};
+
+const initialParams = getInitialParams();
+
 function App() {
   const [bookings, setBookings] = useState([]);
   const [tours, setTours] = useState([]);
@@ -18,18 +40,29 @@ function App() {
   const [agentLogs, setAgentLogs] = useState(['🤖 Simulation environment initialized. Ready for weather events.']);
   const [loading, setLoading] = useState(false);
   const [isRealMongo, setIsRealMongo] = useState(false);
-  const [guestId, setGuestId] = useState('g1');
+  const [guestId, setGuestId] = useState(initialParams.guestId);
   const [showItineraryModal, setShowItineraryModal] = useState(false);
-  const [isGuestViewOnly, setIsGuestViewOnly] = useState(false);
-  const [welcomeCardGuestId, setWelcomeCardGuestId] = useState('g1');
-  const [token, setToken] = useState(null);
+  const [isGuestViewOnly, setIsGuestViewOnly] = useState(initialParams.guestViewOnly);
+  const [welcomeCardGuestId, setWelcomeCardGuestId] = useState(initialParams.guestId);
+  const [token, setToken] = useState(initialParams.token);
   const [tenantBrand, setTenantBrand] = useState(null);
-  const [isSecureModeActive, setIsSecureModeActive] = useState(false);
+  const [isSecureModeActive, setIsSecureModeActive] = useState(initialParams.secureActive);
   const [isSecureMode, setIsSecureMode] = useState(false);
   const [operatorFlyerToken, setOperatorFlyerToken] = useState('');
-  const lastGuestIdRef = React.useRef('g1');
+  const lastGuestIdRef = React.useRef(initialParams.guestId);
+  const lastRequestRef = React.useRef(0);
 
-  const [view, setView] = useState('landing');
+  const [view, setView] = useState(initialParams.view);
+
+  // Unified navigation router to clear secure view-only session locks when exiting Guest Portal context
+  const navigateToView = (newView) => {
+    if (newView !== 'guest') {
+      setToken(null);
+      setIsSecureModeActive(false);
+      setIsGuestViewOnly(false);
+    }
+    setView(newView);
+  };
 
   // Manual Check-in Form States
   const [manualName, setManualName] = useState('');
@@ -89,32 +122,71 @@ function App() {
     setManualBookings([]);
   };
 
-  // Parse query parameters for direct link routing on load
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlView = params.get('view');
-    const urlGuestId = params.get('guest_id');
-    const urlToken = params.get('token');
-    
-    if (urlToken) {
-      setToken(urlToken);
-      setIsSecureModeActive(true);
-      setView('guest');
-      setIsGuestViewOnly(true);
-    } else if (urlGuestId) {
-      setGuestId(urlGuestId);
-      setView('guest');
-      setIsGuestViewOnly(true);
-    } else if (urlView && ['landing', 'guest', 'operator', 'integrations'].includes(urlView)) {
-      setView(urlView);
-    }
-  }, []);
+  // Custom Tour Register Form States
+  const [customTourName, setCustomTourName] = useState('');
+  const [customTourType, setCustomTourType] = useState('outdoor');
+  const [customTourDesc, setCustomTourDesc] = useState('');
+  const [customTourPrice, setCustomTourPrice] = useState('50.0');
+  const [customTourSlots, setCustomTourSlots] = useState(['morning', 'afternoon']);
+  const [customTourCapacity, setCustomTourCapacity] = useState('10');
+  const [customTourLocation, setCustomTourLocation] = useState('Bocas del Toro');
 
-  // Load initial status when guestId or view changes
+  const handleCustomTourSubmit = async (e) => {
+    e.preventDefault();
+    if (!customTourName.trim()) {
+      alert("Please enter a name for the custom excursion.");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/operator/add-tour`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: customTourName,
+          type: customTourType,
+          description: customTourDesc,
+          price: parseFloat(customTourPrice) || 0.0,
+          slots: customTourSlots,
+          capacity: parseInt(customTourCapacity) || 10,
+          location: customTourLocation
+        })
+      });
+      
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert(data.message || "Custom excursion successfully added to MongoDB!");
+        setCustomTourName('');
+        setCustomTourDesc('');
+        setCustomTourPrice('50.0');
+        setCustomTourSlots(['morning', 'afternoon']);
+        setCustomTourCapacity('10');
+        setCustomTourLocation('Bocas del Toro');
+        
+        // Refresh status list
+        fetchStatus(guestId);
+      } else {
+        alert(`Failed to add custom excursion: ${data.detail || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error("Error adding custom tour:", err);
+      alert(`Network error adding excursion: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 1. Load initial status from token if active, isolated to token changes only to prevent switching loops
   useEffect(() => {
     if (token) {
       fetchStatus(null, token);
-    } else {
+    }
+  }, [token]);
+
+  // 2. Load initial status from guestId if token is null (e.g. open sandbox switcher)
+  useEffect(() => {
+    if (!token) {
       fetchStatus(guestId);
     }
   }, [guestId, token]);
@@ -153,6 +225,7 @@ function App() {
   }, [view]);
 
   const fetchStatus = async (currentGuestId = 'g1', currentToken = null) => {
+    const requestId = ++lastRequestRef.current;
     try {
       const activeToken = currentToken || token;
       let url = `${API_BASE}/api/status`;
@@ -165,6 +238,12 @@ function App() {
       const res = await fetch(url);
       if (!res.ok) throw new Error("Could not connect to FastAPI backend server.");
       const data = await res.json();
+      
+      // Ignore stale responses to eliminate network race conditions and infinite loops
+      if (requestId !== lastRequestRef.current) {
+        return;
+      }
+      
       setBookings(data.bookings || []);
       setTours(data.tours || []);
       setLogistics(data.logistics || []);
@@ -492,7 +571,7 @@ function App() {
         ) : (
           <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <h1 className="app-title" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={() => setView('landing')}>
+              <h1 className="app-title" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={() => navigateToView('landing')}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
                   <path d="M12 22c1-4 1-8 0-12" />
                   <path d="M5 22c2-.5 12-.5 14 0" />
@@ -512,16 +591,16 @@ function App() {
 
             {/* Navigation Tabs */}
             <nav className="nav-links">
-              <button className={`nav-link ${view === 'landing' ? 'active' : ''}`} onClick={() => setView('landing')}>
+              <button className={`nav-link ${view === 'landing' ? 'active' : ''}`} onClick={() => navigateToView('landing')}>
                 Home / About
               </button>
-              <button className={`nav-link ${view === 'guest' ? 'active' : ''}`} onClick={() => setView('guest')}>
+              <button className={`nav-link ${view === 'guest' ? 'active' : ''}`} onClick={() => navigateToView('guest')}>
                 Guest Portal
               </button>
-              <button className={`nav-link ${view === 'operator' ? 'active' : ''}`} onClick={() => setView('operator')}>
+              <button className={`nav-link ${view === 'operator' ? 'active' : ''}`} onClick={() => navigateToView('operator')}>
                 Operator Console
               </button>
-              <button className={`nav-link ${view === 'integrations' ? 'active' : ''}`} onClick={() => setView('integrations')}>
+              <button className={`nav-link ${view === 'integrations' ? 'active' : ''}`} onClick={() => navigateToView('integrations')}>
                 Business Integrations
               </button>
             </nav>
@@ -577,6 +656,9 @@ function App() {
             <select 
               value={guestId} 
               onChange={(e) => {
+                setToken(null);
+                setIsSecureModeActive(false);
+                setIsGuestViewOnly(false);
                 setGuestId(e.target.value);
                 setMessages([]); // Clear chat history to represent a fresh session for the new guest
               }}
@@ -967,6 +1049,29 @@ function App() {
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
               </svg>
               ⚙️ Real-time Webhooks & API
+            </button>
+            <button 
+              onClick={() => setIntegrationTab('custom_tours')}
+              style={{
+                background: integrationTab === 'custom_tours' ? 'var(--primary-glow)' : 'transparent',
+                border: 'none',
+                borderBottom: integrationTab === 'custom_tours' ? '3px solid var(--primary)' : '3px solid transparent',
+                color: integrationTab === 'custom_tours' ? 'var(--primary)' : 'var(--text-muted)',
+                padding: '10px 18px',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.25s ease',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderRadius: '6px 6px 0 0'
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              🏝️ Register Custom Tours
             </button>
           </div>
 
@@ -1575,6 +1680,297 @@ function App() {
                       </svg>
                       Sync Webhook for "Lara Croft" (Red Frog Resort)
                     </button>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
+          {/* Sub-Tab 3: Custom Tours Registration Portal */}
+          {integrationTab === 'custom_tours' && (
+            <div className="main-grid" style={{ gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
+              
+              {/* Interactive Registration Form Card */}
+              <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    Register New Local Excursion
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+                    Create custom premium activities, eco-tours, or wellness experiences for your resort and sync them live to MongoDB.
+                  </p>
+                </div>
+
+                <form onSubmit={handleCustomTourSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  
+                  {/* Name field */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>Excursion Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g., Starfish Beach Eco-Kayak Adventure" 
+                      value={customTourName}
+                      onChange={(e) => setCustomTourName(e.target.value)}
+                      style={{
+                        background: 'rgba(0,0,0,0.2)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '6px',
+                        color: 'var(--text-primary)',
+                        padding: '10px 12px',
+                        fontSize: '0.85rem',
+                        outline: 'none',
+                        transition: 'border-color 0.25s'
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    {/* Type field */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>Excursion Type</label>
+                      <select 
+                        value={customTourType}
+                        onChange={(e) => setCustomTourType(e.target.value)}
+                        style={{
+                          background: 'rgba(0,0,0,0.2)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '6px',
+                          color: 'var(--text-primary)',
+                          padding: '10px 12px',
+                          fontSize: '0.85rem',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="outdoor">🌿 Outdoor Adventure</option>
+                        <option value="indoor">🏡 Indoor Experience</option>
+                      </select>
+                    </div>
+
+                    {/* Price field */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>Price per Guest ($ USD)</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        step="0.01"
+                        placeholder="75.00"
+                        value={customTourPrice}
+                        onChange={(e) => setCustomTourPrice(e.target.value)}
+                        style={{
+                          background: 'rgba(0,0,0,0.2)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '6px',
+                          color: 'var(--text-primary)',
+                          padding: '10px 12px',
+                          fontSize: '0.85rem',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    {/* Capacity field */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>Max Capacity (Guests)</label>
+                      <input 
+                        type="number" 
+                        min="1"
+                        placeholder="10"
+                        value={customTourCapacity}
+                        onChange={(e) => setCustomTourCapacity(e.target.value)}
+                        style={{
+                          background: 'rgba(0,0,0,0.2)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '6px',
+                          color: 'var(--text-primary)',
+                          padding: '10px 12px',
+                          fontSize: '0.85rem',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+
+                    {/* Location field */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>Location</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g., Isla Colon" 
+                        value={customTourLocation}
+                        onChange={(e) => setCustomTourLocation(e.target.value)}
+                        style={{
+                          background: 'rgba(0,0,0,0.2)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '6px',
+                          color: 'var(--text-primary)',
+                          padding: '10px 12px',
+                          fontSize: '0.85rem',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Slots field */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>Available Time Slots</label>
+                    <div style={{ display: 'flex', gap: '16px', background: 'rgba(0,0,0,0.15)', padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-primary)' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={customTourSlots.includes('morning')} 
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setCustomTourSlots(prev => [...prev, 'morning']);
+                            } else {
+                              setCustomTourSlots(prev => prev.filter(s => s !== 'morning'));
+                            }
+                          }}
+                          style={{ accentColor: 'var(--primary)', cursor: 'pointer', width: '15px', height: '15px' }}
+                        />
+                        ☀️ Morning Slot
+                      </label>
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-primary)' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={customTourSlots.includes('afternoon')} 
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setCustomTourSlots(prev => [...prev, 'afternoon']);
+                            } else {
+                              setCustomTourSlots(prev => prev.filter(s => s !== 'afternoon'));
+                            }
+                          }}
+                          style={{ accentColor: 'var(--primary)', cursor: 'pointer', width: '15px', height: '15px' }}
+                        />
+                        🌤️ Afternoon Slot
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Description field */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>Excursion Description</label>
+                    <textarea 
+                      placeholder="Give a vivid, high-fidelity description of this overwater or rainforest excursion..." 
+                      rows="3"
+                      value={customTourDesc}
+                      onChange={(e) => setCustomTourDesc(e.target.value)}
+                      style={{
+                        background: 'rgba(0,0,0,0.2)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '6px',
+                        color: 'var(--text-primary)',
+                        padding: '10px 12px',
+                        fontSize: '0.85rem',
+                        outline: 'none',
+                        resize: 'vertical',
+                        fontFamily: 'inherit'
+                      }}
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <button 
+                    type="submit" 
+                    className="btn-primary"
+                    disabled={loading}
+                    style={{ padding: '12px', fontSize: '0.9rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'center', marginTop: '4px' }}
+                  >
+                    {loading ? (
+                      <span className="spinner"></span>
+                    ) : (
+                      <>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="12" y1="5" x2="12" y2="19"></line>
+                          <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Publish Excursion to MongoDB
+                      </>
+                    )}
+                  </button>
+
+                </form>
+              </div>
+
+              {/* Active Registry Preview Column */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                
+                {/* Active Excursion List Card */}
+                <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <line x1="9" y1="3" x2="9" y2="21" />
+                      </svg>
+                      Active Excursion Registry ({tours.length})
+                    </h3>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', background: 'var(--primary-glow)', border: '1px solid var(--border-color)', padding: '2px 8px', borderRadius: '10px' }}>
+                      DB Sync Live
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '430px', overflowY: 'auto', paddingRight: '4px' }}>
+                    {tours.map((tour) => {
+                      const isCustom = tour._id && tour._id.startsWith('t_custom');
+                      return (
+                        <div 
+                          key={tour._id} 
+                          style={{
+                            background: isCustom ? 'rgba(212, 175, 55, 0.04)' : 'rgba(255,255,255,0.01)',
+                            border: `1px solid ${isCustom ? 'rgba(212, 175, 55, 0.25)' : 'var(--border-color)'}`,
+                            borderRadius: '8px',
+                            padding: '12px 14px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '6px',
+                            transition: 'all 0.25s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <span style={{ fontSize: '0.85rem', fontWeight: 650, color: 'var(--text-primary)' }}>
+                                {tour.name}
+                              </span>
+                              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                {tour.type === 'outdoor' ? '🌿 Outdoor Adventure' : '🏡 Indoor Experience'} • 📍 {tour.location || 'Bocas'}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'end', gap: '4px' }}>
+                              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)' }}>
+                                ${tour.price}
+                              </span>
+                              {isCustom && (
+                                <span style={{ fontSize: '0.58rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--primary)', background: 'var(--primary-glow)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                                  CUSTOM
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', margin: 0, lineHeight: '1.4' }}>
+                            {tour.description}
+                          </p>
+                          <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                            {tour.slots && tour.slots.map(s => (
+                              <span key={s} style={{ fontSize: '0.62rem', background: 'rgba(255,255,255,0.04)', color: 'var(--text-muted)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                {s === 'morning' ? '☀️ Morning' : '🌤️ Afternoon'}
+                              </span>
+                            ))}
+                            <span style={{ fontSize: '0.62rem', background: 'rgba(255,255,255,0.04)', color: 'var(--text-muted)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.06)', marginLeft: 'auto' }}>
+                              Cap: {tour.capacity || 10}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 

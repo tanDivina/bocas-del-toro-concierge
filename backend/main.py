@@ -471,6 +471,45 @@ async def sync_guest_from_pms(payload: PMSSyncPayload):
         logger.error(f"Error in PMS sync endpoint: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+class AddTourPayload(BaseModel):
+    name: str
+    type: str  # "outdoor" or "indoor"
+    description: str
+    price: float
+    slots: list = ["morning", "afternoon"]
+    capacity: int = 10
+    location: str = "Bocas del Toro"
+
+@app.post("/api/operator/add-tour")
+async def add_tour(payload: AddTourPayload):
+    """Register a new excursion in the database."""
+    try:
+        # Generate a unique custom tour ID
+        timestamp = int(time.time() * 1000) % 10000
+        tour_id = f"t_custom_{timestamp}"
+        
+        tour_doc = {
+            "_id": tour_id,
+            "name": payload.name,
+            "type": payload.type,
+            "description": payload.description,
+            "price": payload.price,
+            "slots": payload.slots,
+            "capacity": payload.capacity,
+            "location": payload.location
+        }
+        
+        db["tours"].insert_one(tour_doc)
+        logger.info(f"Successfully added custom tour: {payload.name} ({tour_id})")
+        return {
+            "success": True,
+            "tour_id": tour_id,
+            "message": f"Successfully registered new excursion: {payload.name}"
+        }
+    except Exception as e:
+        logger.error(f"Error adding custom tour: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Serve React Frontend Static Files in Production (if frontend/dist exists)
 FRONTEND_DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../frontend/dist")
 if os.path.exists(FRONTEND_DIST_DIR):
