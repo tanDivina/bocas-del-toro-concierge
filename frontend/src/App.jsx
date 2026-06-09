@@ -31,6 +31,64 @@ function App() {
 
   const [view, setView] = useState('landing');
 
+  // Manual Check-in Form States
+  const [manualName, setManualName] = useState('');
+  const [manualPhone, setManualPhone] = useState('');
+  const [manualHotel, setManualHotel] = useState('hotel_lacoralina');
+  const [manualStayStart, setManualStayStart] = useState(new Date().toISOString().split('T')[0]);
+  const [manualStayEnd, setManualStayEnd] = useState(new Date(Date.now() + 259200000).toISOString().split('T')[0]);
+  const [manualNotes, setManualNotes] = useState('');
+  const [manualPreferences, setManualPreferences] = useState([]);
+  const [manualBookings, setManualBookings] = useState([]);
+  const [integrationTab, setIntegrationTab] = useState('manual'); // 'manual' or 'webhook'
+
+  const handleManualCheckInSubmit = (e) => {
+    e.preventDefault();
+    if (!manualName.trim() || !manualPhone.trim()) {
+      alert("Please enter the guest's name and phone number.");
+      return;
+    }
+    
+    // Generate a unique, recognizable ID for manual check-ins
+    const timestamp = Date.now().toString().slice(-6);
+    const randomPart = Math.floor(100 + Math.random() * 900);
+    const guestIdGenerated = `g_manual_${timestamp}_${randomPart}`;
+    
+    // Get hotel name based on hotel_id
+    const hotelNamesMap = {
+      'hotel_nayara': 'Nayara Bocas del Toro',
+      'hotel_lacoralina': 'La Coralina Island House',
+      'hotel_sweetbocas': 'Sweet Bocas',
+      'hotel_bocasvillas': 'Bocas Luxury Villas',
+      'hotel_redfrog': 'Red Frog Beach Resort'
+    };
+    const hotelNameSelected = hotelNamesMap[manualHotel] || 'La Coralina Island House';
+
+    // Prepare payload
+    const payload = {
+      guest_id: guestIdGenerated,
+      name: manualName,
+      phone: manualPhone,
+      preferences: manualPreferences,
+      stay_start: manualStayStart,
+      stay_end: manualStayEnd,
+      notes: manualNotes,
+      hotel_id: manualHotel,
+      hotel_name: hotelNameSelected,
+      bookings: manualBookings
+    };
+
+    // Sync via existing PMS sync function
+    handlePMSSync(payload);
+
+    // Reset manual form fields
+    setManualName('');
+    setManualPhone('');
+    setManualNotes('');
+    setManualPreferences([]);
+    setManualBookings([]);
+  };
+
   // Parse query parameters for direct link routing on load
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -844,37 +902,587 @@ function App() {
       {/* Render Business Integrations View */}
       {view === 'integrations' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div className="landing-hero" style={{ padding: '30px', marginBottom: '0px' }}>
-             <h2 style={{ fontSize: '1.8rem', fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Hero Section */}
+          <div className="landing-hero" style={{ padding: '30px', marginBottom: '0px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+             <h2 style={{ fontSize: '1.8rem', fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '12px', margin: 0 }}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                 <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
                 <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
               </svg>
-              Enterprise Workflow Integration
+              Enterprise Workflow & Front Desk Portal
              </h2>
-            <p className="landing-intro" style={{ fontSize: '0.95rem' }}>
-              Connect your Property Management System (PMS), CRM, or booking engine (like Cloudbeds, MEWS, or custom booking pipelines) to the Bocas del Toro Concierge.
+            <p className="landing-intro" style={{ fontSize: '0.95rem', margin: 0 }}>
+              Onboard guests, generate digital itineraries, and print welcome cards. Support both local manual operations and zero-code automated PMS integrations (like Cloudbeds, MEWS, or custom engines).
             </p>
           </div>
 
-          <div className="main-grid" style={{ gridTemplateColumns: '1.2fr 1fr' }}>
-            {/* Technical Docs */}
-            <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-               <h3 style={{ fontSize: '1.15rem', fontWeight: 600, borderBottom: '1px solid var(--border-color)', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)', flexShrink: 0 }}>
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="2" y1="12" x2="22" y2="12" />
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                </svg>
-                PMS Sync Webhook API Reference
-               </h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Hotels and eco-lodges can trigger this API endpoint on guest check-in, automatically seeding the digital companion with their custom itinerary and preferences.
-              </p>
+          {/* Premium Sub-Tab Navigation */}
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', gap: '16px', paddingBottom: '4px' }}>
+            <button 
+              onClick={() => setIntegrationTab('manual')}
+              style={{
+                background: integrationTab === 'manual' ? 'var(--primary-glow)' : 'transparent',
+                border: 'none',
+                borderBottom: integrationTab === 'manual' ? '3px solid var(--primary)' : '3px solid transparent',
+                color: integrationTab === 'manual' ? 'var(--primary)' : 'var(--text-muted)',
+                padding: '10px 18px',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.25s ease',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderRadius: '6px 6px 0 0'
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="8.5" cy="7" r="4" />
+                <polyline points="17 11 19 13 23 9" />
+              </svg>
+              🔌 Simple Check-In Portal (No PMS)
+            </button>
+            <button 
+              onClick={() => setIntegrationTab('webhook')}
+              style={{
+                background: integrationTab === 'webhook' ? 'var(--primary-glow)' : 'transparent',
+                border: 'none',
+                borderBottom: integrationTab === 'webhook' ? '3px solid var(--primary)' : '3px solid transparent',
+                color: integrationTab === 'webhook' ? 'var(--primary)' : 'var(--text-muted)',
+                padding: '10px 18px',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.25s ease',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderRadius: '6px 6px 0 0'
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+              ⚙️ Real-time Webhooks & API
+            </button>
+          </div>
+
+          {/* Sub-Tab 1: Manual Front Desk Check-In Portal */}
+          {integrationTab === 'manual' && (
+            <div className="main-grid" style={{ gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
               
-              <div style={{ background: '#0f172a', padding: '16px', borderRadius: '8px', overflowX: 'auto', border: '1px solid var(--border-color)' }}>
-                <span style={{ color: '#38bdf8', fontSize: '0.75rem', fontWeight: 600, display: 'block', marginBottom: '6px' }}>POST /api/pms/sync-guest</span>
-                <pre style={{ color: '#cbd5e1', fontSize: '0.78rem', margin: 0, fontFamily: 'Courier New, monospace' }}>
+              {/* Interactive Manual Form Card */}
+              <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                      <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                    Manual Guest Check-In Form
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+                    For local overwater lodges, boutique stays, and tour operators with manual reservation books. Register check-ins live into your MongoDB Atlas cluster.
+                  </p>
+                </div>
+
+                <form onSubmit={handleManualCheckInSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  
+                  {/* Two Column Grid: Name and Phone */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                        Guest Full Name *
+                      </label>
+                      <input 
+                        type="text" 
+                        required
+                        placeholder="e.g. Michael Jordan"
+                        value={manualName}
+                        onChange={(e) => setManualName(e.target.value)}
+                        style={{
+                          background: 'rgba(15, 23, 42, 0.4)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '8px',
+                          color: 'var(--text-primary)',
+                          padding: '10px 12px',
+                          fontSize: '0.88rem',
+                          outline: 'none',
+                          width: '100%'
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                        Phone Number *
+                      </label>
+                      <input 
+                        type="text" 
+                        required
+                        placeholder="e.g. +1-555-0199"
+                        value={manualPhone}
+                        onChange={(e) => setManualPhone(e.target.value)}
+                        style={{
+                          background: 'rgba(15, 23, 42, 0.4)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '8px',
+                          color: 'var(--text-primary)',
+                          padding: '10px 12px',
+                          fontSize: '0.88rem',
+                          outline: 'none',
+                          width: '100%'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Resort Dropdown Selector */}
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                      Resort Property (Tenant Brand)
+                    </label>
+                    <select 
+                      value={manualHotel}
+                      onChange={(e) => setManualHotel(e.target.value)}
+                      style={{
+                        background: 'rgba(15, 23, 42, 0.4)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        color: 'var(--text-primary)',
+                        padding: '10px 12px',
+                        fontSize: '0.88rem',
+                        outline: 'none',
+                        width: '100%',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="hotel_nayara">Nayara Bocas del Toro (Eco Overwater Villas)</option>
+                      <option value="hotel_lacoralina">La Coralina Island House (Wellness Sanctuary)</option>
+                      <option value="hotel_sweetbocas">Sweet Bocas (Private Island Estate)</option>
+                      <option value="hotel_bocasvillas">Bocas Luxury Villas (Cliffside Eco-Retreat)</option>
+                      <option value="hotel_redfrog">Red Frog Beach Resort (Beachfront Jungle Playground)</option>
+                    </select>
+                  </div>
+
+                  {/* Two Column Grid: Arrival & Departure */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                        Check-In Date
+                      </label>
+                      <input 
+                        type="date" 
+                        value={manualStayStart}
+                        onChange={(e) => setManualStayStart(e.target.value)}
+                        style={{
+                          background: 'rgba(15, 23, 42, 0.4)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '8px',
+                          color: 'var(--text-primary)',
+                          padding: '10px 12px',
+                          fontSize: '0.88rem',
+                          outline: 'none',
+                          width: '100%'
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                        Check-Out Date
+                      </label>
+                      <input 
+                        type="date" 
+                        value={manualStayEnd}
+                        onChange={(e) => setManualStayEnd(e.target.value)}
+                        style={{
+                          background: 'rgba(15, 23, 42, 0.4)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '8px',
+                          color: 'var(--text-primary)',
+                          padding: '10px 12px',
+                          fontSize: '0.88rem',
+                          outline: 'none',
+                          width: '100%'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Preferences / Tags */}
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                      Guest Vibe / Travel Styles
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
+                      {['adventure', 'relaxation', 'wellness', 'wildlife', 'culture', 'indoor'].map(tag => {
+                        const isSelected = manualPreferences.includes(tag);
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                setManualPreferences(prev => prev.filter(t => t !== tag));
+                              } else {
+                                setManualPreferences(prev => [...prev, tag]);
+                              }
+                            }}
+                            style={{
+                              background: isSelected ? 'var(--primary)' : 'rgba(255,255,255,0.03)',
+                              border: '1px solid',
+                              borderColor: isSelected ? 'var(--primary)' : 'var(--border-color)',
+                              color: isSelected ? '#0f172a' : 'var(--text-muted)',
+                              padding: '6px 12px',
+                              borderRadius: '16px',
+                              fontSize: '0.74rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              textTransform: 'capitalize'
+                            }}
+                          >
+                            {tag}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Notes & Special Requests */}
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                      Front-Desk Notes / Special Requests (Optional)
+                    </label>
+                    <textarea 
+                      placeholder="e.g. Honeymoon couple. Enjoys early mornings. Prefers overwater massage decks."
+                      value={manualNotes}
+                      onChange={(e) => setManualNotes(e.target.value)}
+                      rows={2}
+                      style={{
+                        background: 'rgba(15, 23, 42, 0.4)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        color: 'var(--text-primary)',
+                        padding: '10px 12px',
+                        fontSize: '0.88rem',
+                        outline: 'none',
+                        width: '100%',
+                        resize: 'none',
+                        fontFamily: 'var(--font-sans)'
+                      }}
+                    />
+                  </div>
+
+                  {/* Pre-Booked Activities */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', margin: 0 }}>
+                      Pre-Booked Excursions & Spa (Check to include in itinerary)
+                    </label>
+                    <div style={{
+                      maxHeight: '220px',
+                      overflowY: 'auto',
+                      border: '1px solid var(--border-color)',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      background: 'rgba(0, 0, 0, 0.15)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}>
+                      {tours.map(tour => {
+                        const isChecked = manualBookings.some(b => b.tour_id === tour._id);
+                        const bookingDetail = manualBookings.find(b => b.tour_id === tour._id);
+                        return (
+                          <div key={tour._id} style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <input 
+                                type="checkbox"
+                                id={`chk-${tour._id}`}
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setManualBookings(prev => [...prev, {
+                                      tour_id: tour._id,
+                                      date: manualStayStart,
+                                      slot: tour.slots?.[0] || 'morning',
+                                      price: tour.price || 0.0
+                                    }]);
+                                  } else {
+                                    setManualBookings(prev => prev.filter(b => b.tour_id !== tour._id));
+                                  }
+                                }}
+                                style={{ accentColor: 'var(--primary)', cursor: 'pointer', width: '15px', height: '15px' }}
+                              />
+                              <label htmlFor={`chk-${tour._id}`} style={{ fontSize: '0.82rem', fontWeight: 550, cursor: 'pointer', flex: 1, display: 'flex', justifyContent: 'space-between' }}>
+                                <span>{tour.name}</span>
+                                <span style={{ color: 'var(--primary)', fontWeight: 600 }}>${tour.price}</span>
+                              </label>
+                            </div>
+
+                            {isChecked && bookingDetail && (
+                              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px', marginLeft: '22px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '8px', borderRadius: '6px' }}>
+                                <div>
+                                  <label style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Excursion Date</label>
+                                  <input 
+                                    type="date"
+                                    min={manualStayStart}
+                                    max={manualStayEnd}
+                                    value={bookingDetail.date}
+                                    onChange={(e) => {
+                                      const dVal = e.target.value;
+                                      setManualBookings(prev => prev.map(b => b.tour_id === tour._id ? { ...b, date: dVal } : b));
+                                    }}
+                                    style={{
+                                      background: '#090d16',
+                                      border: '1px solid rgba(255,255,255,0.08)',
+                                      borderRadius: '4px',
+                                      color: 'var(--text-primary)',
+                                      padding: '4px 6px',
+                                      fontSize: '0.74rem',
+                                      width: '100%'
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <label style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Time Slot</label>
+                                  <select
+                                    value={bookingDetail.slot}
+                                    onChange={(e) => {
+                                      const sVal = e.target.value;
+                                      setManualBookings(prev => prev.map(b => b.tour_id === tour._id ? { ...b, slot: sVal } : b));
+                                    }}
+                                    style={{
+                                      background: '#090d16',
+                                      border: '1px solid rgba(255,255,255,0.08)',
+                                      borderRadius: '4px',
+                                      color: 'var(--text-primary)',
+                                      padding: '4px 6px',
+                                      fontSize: '0.74rem',
+                                      width: '100%',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    {(tour.slots || ['morning', 'afternoon']).map(s => (
+                                      <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <button 
+                    type="submit"
+                    className="btn-primary"
+                    disabled={loading}
+                    style={{ padding: '12px', width: '100%', marginTop: '8px' }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    Check In Guest & Generate Digital Portal
+                  </button>
+
+                </form>
+              </div>
+
+              {/* Dynamic Welcome Card Live Preview */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', borderLeft: '4px solid var(--primary)', background: 'hsla(38, 45%, 60%, 0.02)' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    Live Welcome Card Preview
+                  </h4>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                    This is a live mockup of the physical welcome flyer automatically generated upon check-in. Put this in your guest's welcome envelope or print it directly!
+                  </p>
+
+                  {/* Simulated Card Block */}
+                  <div style={{
+                    background: 'var(--bg-color)',
+                    border: '1px dashed var(--primary)',
+                    borderRadius: '12px',
+                    padding: '24px',
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '14px',
+                    position: 'relative'
+                  }}>
+                    {/* Tiny Ribbon */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '12px', right: '12px',
+                      background: 'var(--primary-glow)',
+                      border: '1px solid var(--primary)',
+                      color: 'var(--primary)',
+                      padding: '4px 10px',
+                      borderRadius: '10px',
+                      fontSize: '0.62rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.05em'
+                    }}>
+                      ISLANDFLOW COMPANION
+                    </div>
+
+                    <h5 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '8px 0 0 0', fontFamily: 'var(--font-serif)', color: 'var(--primary)' }}>
+                      {manualName ? manualName : "Guest Full Name"}
+                    </h5>
+                    
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', maxWidth: '280px', margin: 0, lineHeight: '1.4' }}>
+                      Welcome to <strong>{manualHotel === 'hotel_nayara' ? 'Nayara Bocas del Toro' : manualHotel === 'hotel_lacoralina' ? 'La Coralina Island House' : manualHotel === 'hotel_sweetbocas' ? 'Sweet Bocas' : manualHotel === 'hotel_bocasvillas' ? 'Bocas Luxury Villas' : 'Red Frog Beach Resort'}</strong>. Scan this QR code to unlock your personalized, weather-intelligent eco-concierge companion.
+                    </p>
+
+                    <div style={{
+                      background: 'white',
+                      padding: '8px',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      display: 'inline-block'
+                    }}>
+                      <img 
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&color=0f172b&data=${encodeURIComponent(window.location.origin + "?guest_id=" + (manualName ? "g_manual_preview" : "g_placeholder"))}`} 
+                        alt="Onboarding QR Code" 
+                        style={{ width: '100px', height: '100px', display: 'block', opacity: manualName ? 1 : 0.4 }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 650 }}>
+                        Scan to Access Your Itinerary
+                      </span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>
+                        Custom stay: {manualStayStart} to {manualStayEnd}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', background: 'rgba(255,255,255,0.01)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', display: 'flex', alignItems: 'start', gap: '8px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px', color: 'var(--primary)' }}>
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="16" x2="12" y2="12" />
+                      <line x1="12" y1="8" x2="12.01" y2="8" />
+                    </svg>
+                    <span><strong>Upon submission:</strong> This guest will be recorded in MongoDB, a secure magic-link QR will generate, and you will be automatically redirected to their personalized dashboard.</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* Sub-Tab 2: Technical Webhooks Integration Panel */}
+          {integrationTab === 'webhook' && (
+            <div className="main-grid" style={{ gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
+              
+              {/* Plain English Visual Guide for Non-Tech Savvy Operators */}
+              <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                    How Webhooks Work (Zero-Code Guide)
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+                    You don't need a software developer or coding experience to connect your existing hotel systems! Webhooks act as background notifications that sync reservations automatically.
+                  </p>
+                </div>
+
+                {/* Conceptual Process Flow Infographic */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', background: 'rgba(0,0,0,0.15)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'start' }}>
+                    <div style={{ background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem', flexShrink: 0 }}>1</div>
+                    <div>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 650, display: 'block', color: 'var(--text-primary)' }}>Staff Checks-In Guest</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>You check in Michael Jordan at your front desk in your PMS software (e.g. Cloudbeds).</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'start' }}>
+                    <div style={{ background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem', flexShrink: 0 }}>2</div>
+                    <div>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 650, display: 'block', color: 'var(--text-primary)' }}>PMS Sends Background Message</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Your software immediately emails details to our secure webhook URL behind the scenes.</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'start' }}>
+                    <div style={{ background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem', flexShrink: 0 }}>3</div>
+                    <div>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 650, display: 'block', color: 'var(--text-primary)' }}>Itinerary Activated Instantly</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>MongoDB is seeded, the AI compiles a weather-aware flyer, and prints their welcome QR code!</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--primary)', margin: 0 }}>Configuration Steps for Cloudbeds or MEWS:</h4>
+                  <ol style={{ fontSize: '0.82rem', color: 'var(--text-dim)', paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '8px', margin: 0, lineHeight: '1.5' }}>
+                    <li>Log in to your <strong>Cloudbeds / MEWS Dashboard</strong>.</li>
+                    <li>Go to <strong>Settings ➔ Manage Integrations</strong> (or look for Webhooks).</li>
+                    <li>Click <strong>"Add Webhook"</strong> or <strong>"Register Endpoint"</strong>.</li>
+                    <li>Choose the event trigger: <strong>"Guest Checked In"</strong> (or "Reservation Created").</li>
+                    <li>Copy and Paste this exact URL into the input field:
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '6px', marginBottom: '4px' }}>
+                        <input 
+                          type="text" 
+                          readOnly 
+                          value={`${API_BASE}/api/pms/sync-guest`} 
+                          style={{ fontSize: '0.75rem', fontFamily: 'monospace', padding: '6px 10px', background: '#090d16', border: '1px solid var(--border-color)', borderRadius: '4px', flex: 1, color: '#38bdf8' }}
+                          onClick={(e) => {
+                            e.currentTarget.select();
+                            document.execCommand('copy');
+                            alert("Copied to clipboard!");
+                          }}
+                        />
+                        <button 
+                          type="button" 
+                          className="btn-primary" 
+                          style={{ padding: '6px 12px', fontSize: '0.72rem' }}
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${API_BASE}/api/pms/sync-guest`);
+                            alert("Copied to clipboard!");
+                          }}
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </li>
+                    <li>Click <strong>Save</strong>. You are completely done! Everything is fully automated.</li>
+                  </ol>
+                </div>
+              </div>
+
+              {/* Developer Documentation & Automated Mock Synergizer */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                
+                {/* Tech Endpoint Specs */}
+                <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', margin: 0 }}>
+                    JSON API Endpoint Definition
+                  </h3>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
+                    For developers building bespoke pipelines. Delivers standard Pydantic payload models.
+                  </p>
+                  
+                  <div style={{ background: '#0f172a', padding: '12px', borderRadius: '8px', overflowX: 'auto', border: '1px solid var(--border-color)', marginTop: '4px' }}>
+                    <span style={{ color: '#38bdf8', fontSize: '0.72rem', fontWeight: 600, display: 'block', marginBottom: '4px' }}>POST /api/pms/sync-guest</span>
+                    <pre style={{ color: '#cbd5e1', fontSize: '0.72rem', margin: 0, fontFamily: 'Courier New, monospace' }}>
 {`{
   "guest_id": "g_pms_42",
   "name": "Bruce Wayne",
@@ -892,93 +1500,88 @@ function App() {
     }
   ]
 }`}
-                </pre>
+                    </pre>
+                  </div>
+                </div>
+
+                {/* Trigger Buttons */}
+                <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', margin: 0 }}>
+                    Trigger Webhook Simulation
+                  </h3>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
+                    Quickly verify and test endpoint integrations by triggering live checked-in payloads for preset guests.
+                  </p>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <button 
+                      className="btn-primary"
+                      disabled={loading}
+                      onClick={() => handlePMSSync({
+                        guest_id: "g_pms_99",
+                        name: "John Wick",
+                        phone: "+1-212-CONTINENTAL",
+                        preferences: ["relaxation", "indoor"],
+                        stay_start: new Date().toISOString().split('T')[0],
+                        stay_end: new Date(Date.now() + 259200000).toISOString().split('T')[0],
+                        notes: "Traveling with a dog. Requires premium overwater spa decks.",
+                        hotel_id: "hotel_lacoralina",
+                        hotel_name: "La Coralina Island House",
+                        bookings: [
+                          {
+                            tour_id: "t6",
+                            date: new Date().toISOString().split('T')[0],
+                            slot: "morning",
+                            price: 75.0
+                          }
+                        ]
+                      })}
+                      style={{ padding: '12px', width: '100%', fontSize: '0.82rem' }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                      </svg>
+                      Sync Webhook for "John Wick" (La Coralina)
+                    </button>
+
+                    <button 
+                      className="btn-secondary"
+                      disabled={loading}
+                      onClick={() => handlePMSSync({
+                        guest_id: "g_pms_100",
+                        name: "Lara Croft",
+                        phone: "+44-20-TOMB-RAIDER",
+                        preferences: ["adventure", "wildlife"],
+                        stay_start: new Date().toISOString().split('T')[0],
+                        stay_end: new Date(Date.now() + 259200000).toISOString().split('T')[0],
+                        notes: "Enjoys extreme ziplining and cave explorations.",
+                        hotel_id: "hotel_redfrog",
+                        hotel_name: "Red Frog Beach Resort",
+                        bookings: [
+                          {
+                            tour_id: "t2",
+                            date: new Date().toISOString().split('T')[0],
+                            slot: "afternoon",
+                            price: 65.0
+                          }
+                        ]
+                      })}
+                      style={{ padding: '12px', width: '100%', fontSize: '0.82rem' }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                      </svg>
+                      Sync Webhook for "Lara Croft" (Red Frog Resort)
+                    </button>
+                  </div>
+                </div>
+
               </div>
 
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginTop: '10px' }}>Integration Benefits:</h4>
-              <ul style={{ fontSize: '0.82rem', color: 'var(--text-dim)', paddingLeft: '20px', lineHeight: '1.6' }}>
-                <li><strong>No manual entry:</strong> Bookings flow automatically from the front desk into the guest portal.</li>
-                <li><strong>Proactive Dispatching:</strong> The agent monitors live weather and notifies front-desk agents / guest phones instantly of recommended changes.</li>
-                <li><strong>Printed Receipts with Deep Link QRs:</strong> Print checkout receipts displaying dynamic QR codes linking back to their customized portal.</li>
-              </ul>
             </div>
-
-            {/* Simulated Live Injector */}
-            <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-               <h3 style={{ fontSize: '1.15rem', fontWeight: 600, borderBottom: '1px solid var(--border-color)', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)', flexShrink: 0 }}>
-                  <path d="M10 2v7.31a2.5 2 0 0 1-.73 1.77l-4.54 4.54a4.5 4.5 0 0 0 6.36 6.36l4.54-4.54a2.5 2.5 0 0 1 1.77-.73H14V2z" />
-                  <line x1="8.5" y1="2" x2="15.5" y2="2" />
-                </svg>
-                Simulate PMS Webhook Trigger
-               </h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Trigger a mock check-in and booking synchronization to verify how real-world hotels feed reservation payloads directly into the live MongoDB Atlas.
-              </p>
-
-              <button 
-                className="btn-primary"
-                disabled={loading}
-                onClick={() => handlePMSSync({
-                  guest_id: "g_pms_99",
-                  name: "John Wick",
-                  phone: "+1-212-CONTINENTAL",
-                  preferences: ["relaxation", "indoor"],
-                  stay_start: new Date().toISOString().split('T')[0],
-                  stay_end: new Date(Date.now() + 259200000).toISOString().split('T')[0],
-                  notes: "Traveling with a dog. Requires premium overwater spa decks.",
-                  bookings: [
-                    {
-                      tour_id: "t6",
-                      date: new Date().toISOString().split('T')[0],
-                      slot: "morning",
-                      price: 75.0
-                    }
-                  ]
-                })}
-                style={{ padding: '12px', width: '100%' }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-                Sync Check-in payload for "John Wick"
-              </button>
-
-              <button 
-                className="btn-secondary"
-                disabled={loading}
-                onClick={() => handlePMSSync({
-                  guest_id: "g_pms_100",
-                  name: "Lara Croft",
-                  phone: "+44-20-TOMB-RAIDER",
-                  preferences: ["adventure", "wildlife"],
-                  stay_start: new Date().toISOString().split('T')[0],
-                  stay_end: new Date(Date.now() + 259200000).toISOString().split('T')[0],
-                  notes: "Enjoys extreme ziplining and cave explorations.",
-                  bookings: [
-                    {
-                      tour_id: "t2",
-                      date: new Date().toISOString().split('T')[0],
-                      slot: "afternoon",
-                      price: 65.0
-                    }
-                  ]
-                })}
-                style={{ padding: '12px', width: '100%' }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                </svg>
-                Sync Check-in payload for "Lara Croft"
-              </button>
-
-              <div style={{ marginTop: '10px', fontSize: '0.8rem', color: 'var(--text-muted)', borderLeft: '3px solid var(--primary)', paddingLeft: '10px' }}>
-                <strong>How to test:</strong> Click a button to simulate a check-in. The app will immediately ingest the guest, populate bookings in MongoDB, auto-generate their initial itinerary markdown, clear the ADK session, and switch you directly to the active guest's companion view.
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       )}
 

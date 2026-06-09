@@ -10,6 +10,7 @@ import time
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 from dotenv import load_dotenv
 
 from db import db, is_real_mongo
@@ -116,6 +117,8 @@ class PMSSyncPayload(BaseModel):
     stay_end: str
     notes: str = ""
     bookings: list = []  # list of dicts with {"tour_id": "...", "date": "...", "slot": "...", "price": 0.0}
+    hotel_id: Optional[str] = None
+    hotel_name: Optional[str] = None
 
 # --- Weather Sync Helper ---
 def sync_live_weather():
@@ -428,7 +431,9 @@ async def sync_guest_from_pms(payload: PMSSyncPayload):
             "preferences": payload.preferences,
             "stay_start": payload.stay_start,
             "stay_end": payload.stay_end,
-            "notes": payload.notes
+            "notes": payload.notes,
+            "hotel_id": payload.hotel_id,
+            "hotel_name": payload.hotel_name
         }
         db["guests"].update_one(
             {"_id": payload.guest_id},
