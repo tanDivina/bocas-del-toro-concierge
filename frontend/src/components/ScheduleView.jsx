@@ -27,11 +27,14 @@ export default function ScheduleView({ bookings, tours, logistics }) {
         <h2 style={{ fontSize: '1.25rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '10px', fontFamily: 'var(--font-serif)', letterSpacing: '0.01em' }}>
           {/* Custom SVG Palm Island Logo */}
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}>
-            <path d="M12 22c0-3.33-1-6.67-3-10" />
-            <path d="M12 2c4 1 7 4 7 8 0 1.5-.5 3-1.5 4" />
-            <path d="M12 2c1.5 3.5 4 6 7.5 7" />
-            <path d="M12 2C9 5.5 6 7 2 8" />
-            <circle cx="12" cy="22" r="1" />
+            <path d="M12 22c1-4 1-8 0-12" />
+            <path d="M5 22c2-.5 12-.5 14 0" />
+            <path d="M12 10c-3-2-7-1-9 2" />
+            <path d="M12 10c3-2 7-1 9 2" />
+            <path d="M12 10c-4 .5-8 3-9 7" />
+            <path d="M12 10c4 .5 8 3 9 7" />
+            <path d="M12 10c-1.5-4-5-6-8-6" />
+            <path d="M12 10c1.5-4 5-6 8-6" />
           </svg>
           Stay Activity Timeline
         </h2>
@@ -85,9 +88,8 @@ export default function ScheduleView({ bookings, tours, logistics }) {
                     </svg>
                   ) : (weather === 'Rainy' ? (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17 18a5 5 0 0 0-1-9.9h-1.26A8 8 0 1 0 9 20h4a5 5 0 0 0 4-2Z" />
-                      <line x1="12" y1="1" x2="12" y2="3" />
-                      <path d="m8 22 2-3M12 22l2-3" />
+                      <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
+                      <path d="M16 13v8M8 13v8M12 15v8" />
                     </svg>
                   ) : (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

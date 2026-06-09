@@ -125,8 +125,8 @@ body {
 
 /* Elegant Buttons */
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary), hsl(38, 50%, 48%));
-  color: hsl(210, 32%, 3%);
+  background: var(--primary);
+  color: #0d1117; /* High contrast dark text */
   border: none;
   font-family: var(--font-sans);
   font-weight: 600;

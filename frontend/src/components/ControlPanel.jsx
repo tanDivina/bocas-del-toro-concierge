@@ -1,5 +1,79 @@
 import React, { useState } from 'react';
 
+const logTypes = [
+  { emoji: '🤖', label: 'AGENT', bg: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', border: 'rgba(59, 130, 246, 0.25)' },
+  { emoji: '💬', label: 'GUEST', bg: 'rgba(236, 72, 153, 0.12)', color: '#ec4899', border: 'rgba(236, 72, 153, 0.25)' },
+  { emoji: '❌', label: 'ERROR', bg: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', border: 'rgba(239, 68, 68, 0.25)' },
+  { emoji: '⛈️', label: 'WEATHER', bg: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', border: 'rgba(139, 92, 246, 0.25)' },
+  { emoji: '🔍', label: 'TOOL CALL', bg: 'rgba(234, 179, 8, 0.12)', color: '#eab308', border: 'rgba(234, 179, 8, 0.25)' },
+  { emoji: '📥', label: 'TOOL RETURN', bg: 'rgba(14, 165, 233, 0.12)', color: '#0ea5e9', border: 'rgba(14, 165, 233, 0.25)' },
+  { emoji: '👉', label: 'DECISION', bg: 'rgba(249, 115, 22, 0.12)', color: '#f97316', border: 'rgba(249, 115, 22, 0.25)' },
+  { emoji: '✅', label: 'SUCCESS', bg: 'rgba(16, 185, 129, 0.12)', color: '#10b981', border: 'rgba(16, 185, 129, 0.25)' },
+  { emoji: '🛎️', label: 'PMS WEBHOOK', bg: 'rgba(168, 85, 247, 0.12)', color: '#a855f7', border: 'rgba(168, 85, 247, 0.25)' },
+  { emoji: '🎒', label: 'INTEGRATION', bg: 'rgba(20, 184, 166, 0.12)', color: '#14b8a6', border: 'rgba(20, 184, 166, 0.25)' },
+  { emoji: 'ℹ️', label: 'INFO', bg: 'rgba(107, 114, 128, 0.12)', color: '#9ca3af', border: 'rgba(107, 114, 128, 0.25)' },
+  { emoji: '🔄', label: 'SYSTEM', bg: 'rgba(107, 114, 128, 0.12)', color: '#9ca3af', border: 'rgba(107, 114, 128, 0.25)' },
+];
+
+function renderParsedLog(log, index) {
+  let matched = null;
+  for (const lt of logTypes) {
+    if (log.startsWith(lt.emoji)) {
+      matched = lt;
+      break;
+    }
+  }
+
+  const isCall = matched?.emoji === '🔍';
+  const isRet = matched?.emoji === '📥';
+  const isError = matched?.emoji === '❌';
+
+  let logText = log;
+  if (matched) {
+    logText = log.substring(matched.emoji.length).trim();
+  }
+
+  return (
+    <div 
+      key={index} 
+      className={`console-line ${isCall ? 'call' : (isRet ? 'ret' : (isError ? 'err' : ''))}`}
+      style={{ 
+        display: 'flex', 
+        alignItems: 'flex-start', 
+        gap: '10px', 
+        padding: '6px 8px', 
+        borderRadius: '6px',
+        fontSize: '0.82rem',
+        fontFamily: 'monospace',
+        whiteSpace: 'pre-wrap',
+        lineHeight: '1.4'
+      }}
+    >
+      {matched && (
+        <span 
+          style={{ 
+            background: matched.bg, 
+            color: matched.color, 
+            border: `1px solid ${matched.border}`, 
+            padding: '2px 6px', 
+            borderRadius: '4px', 
+            fontSize: '0.68rem', 
+            fontWeight: 700, 
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            display: 'inline-block',
+            flexShrink: 0,
+            userSelect: 'none'
+          }}
+        >
+          {matched.label}
+        </span>
+      )}
+      <span style={{ flex: 1, marginTop: '1px' }}>{logText}</span>
+    </div>
+  );
+}
+
 export default function ControlPanel({ 
   logistics, 
   onSimulate, 
@@ -188,19 +262,7 @@ export default function ControlPanel({
               No execution events registered yet. Simulate a weather shift or chat with the agent to populate logs.
             </div>
           ) : (
-            agentLogs.map((log, index) => {
-              const isCall = log.startsWith('🔍');
-              const isRet = log.startsWith('📥');
-              return (
-                <div 
-                  key={index} 
-                  className={`console-line ${isCall ? 'call' : (isRet ? 'ret' : '')}`}
-                  style={{ whiteSpace: 'pre-wrap' }}
-                >
-                  {log}
-                </div>
-              );
-            })
+            agentLogs.map((log, index) => renderParsedLog(log, index))
           )}
         </div>
       </div>

@@ -369,11 +369,15 @@ function App() {
           <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <h1 className="app-title" style={{ display: 'flex', alignItems: 'center', gap: '10px', textTransform: 'uppercase', fontFamily: 'var(--font-serif)', letterSpacing: '0.08em', color: 'var(--primary)' }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
-                  <path d="M12 22c0-3.33-1-6.67-3-10" />
-                  <path d="M12 2c4 1 7 4 7 8 0 1.5-.5 3-1.5 4" />
-                  <path d="M12 2c1.5 3.5 4 6 7.5 7" />
-                  <path d="M12 2C9 5.5 6 7 2 8" />
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
+                  <path d="M12 22c1-4 1-8 0-12" />
+                  <path d="M5 22c2-.5 12-.5 14 0" />
+                  <path d="M12 10c-3-2-7-1-9 2" />
+                  <path d="M12 10c3-2 7-1 9 2" />
+                  <path d="M12 10c-4 .5-8 3-9 7" />
+                  <path d="M12 10c4 .5 8 3 9 7" />
+                  <path d="M12 10c-1.5-4-5-6-8-6" />
+                  <path d="M12 10c1.5-4 5-6 8-6" />
                 </svg>
                 {tenantBrand?.name || guests.find(g => g._id === guestId)?.hotel_name || 'La Coralina Island House'}
               </h1>
@@ -431,11 +435,15 @@ function App() {
           <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <h1 className="app-title" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={() => setView('landing')}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
-                  <path d="M12 22c0-3.33-1-6.67-3-10" />
-                  <path d="M12 2c4 1 7 4 7 8 0 1.5-.5 3-1.5 4" />
-                  <path d="M12 2c1.5 3.5 4 6 7.5 7" />
-                  <path d="M12 2C9 5.5 6 7 2 8" />
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
+                  <path d="M12 22c1-4 1-8 0-12" />
+                  <path d="M5 22c2-.5 12-.5 14 0" />
+                  <path d="M12 10c-3-2-7-1-9 2" />
+                  <path d="M12 10c3-2 7-1 9 2" />
+                  <path d="M12 10c-4 .5-8 3-9 7" />
+                  <path d="M12 10c4 .5 8 3 9 7" />
+                  <path d="M12 10c-1.5-4-5-6-8-6" />
+                  <path d="M12 10c1.5-4 5-6 8-6" />
                 </svg>
                 Bocas del Toro Concierge
               </h1>
@@ -593,11 +601,15 @@ function App() {
               <div className="glass-card feature-item">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div className="feature-icon-wrapper">
-                    <svg width="22" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22c0-3.33-1-6.67-3-10" />
-                      <path d="M12 2c4 1 7 4 7 8 0 1.5-.5 3-1.5 4" />
-                      <path d="M12 2c1.5 3.5 4 6 7.5 7" />
-                      <path d="M12 2C9 5.5 6 7 2 8" />
+                    <svg width="22" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22c1-4 1-8 0-12" />
+                      <path d="M5 22c2-.5 12-.5 14 0" />
+                      <path d="M12 10c-3-2-7-1-9 2" />
+                      <path d="M12 10c3-2 7-1 9 2" />
+                      <path d="M12 10c-4 .5-8 3-9 7" />
+                      <path d="M12 10c4 .5 8 3 9 7" />
+                      <path d="M12 10c-1.5-4-5-6-8-6" />
+                      <path d="M12 10c1.5-4 5-6 8-6" />
                     </svg>
                   </div>
                   <div className="feature-title">Afro-Caribbean Hospitality</div>
@@ -833,7 +845,13 @@ function App() {
       {view === 'integrations' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div className="landing-hero" style={{ padding: '30px', marginBottom: '0px' }}>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--primary)' }}>💼 Enterprise Workflow Integration</h2>
+             <h2 style={{ fontSize: '1.8rem', fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+              </svg>
+              Enterprise Workflow Integration
+             </h2>
             <p className="landing-intro" style={{ fontSize: '0.95rem' }}>
               Connect your Property Management System (PMS), CRM, or booking engine (like Cloudbeds, MEWS, or custom booking pipelines) to the Bocas del Toro Concierge.
             </p>
@@ -842,7 +860,14 @@ function App() {
           <div className="main-grid" style={{ gridTemplateColumns: '1.2fr 1fr' }}>
             {/* Technical Docs */}
             <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 600, borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>🌐 PMS Sync Webhook API Reference</h3>
+               <h3 style={{ fontSize: '1.15rem', fontWeight: 600, borderBottom: '1px solid var(--border-color)', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)', flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+                PMS Sync Webhook API Reference
+               </h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                 Hotels and eco-lodges can trigger this API endpoint on guest check-in, automatically seeding the digital companion with their custom itinerary and preferences.
               </p>
@@ -880,7 +905,13 @@ function App() {
 
             {/* Simulated Live Injector */}
             <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 600, borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>🧪 Simulate PMS Webhook Trigger</h3>
+               <h3 style={{ fontSize: '1.15rem', fontWeight: 600, borderBottom: '1px solid var(--border-color)', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)', flexShrink: 0 }}>
+                  <path d="M10 2v7.31a2.5 2 0 0 1-.73 1.77l-4.54 4.54a4.5 4.5 0 0 0 6.36 6.36l4.54-4.54a2.5 2.5 0 0 1 1.77-.73H14V2z" />
+                  <line x1="8.5" y1="2" x2="15.5" y2="2" />
+                </svg>
+                Simulate PMS Webhook Trigger
+               </h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                 Trigger a mock check-in and booking synchronization to verify how real-world hotels feed reservation payloads directly into the live MongoDB Atlas.
               </p>
@@ -905,9 +936,13 @@ function App() {
                     }
                   ]
                 })}
-                style={{ background: 'linear-gradient(135deg, hsl(188, 86%, 40%), var(--primary))', padding: '12px' }}
+                style={{ padding: '12px', width: '100%' }}
               >
-                🛎️ Sync Check-in payload for "John Wick"
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                Sync Check-in payload for "John Wick"
               </button>
 
               <button 
@@ -930,9 +965,13 @@ function App() {
                     }
                   ]
                 })}
-                style={{ padding: '12px' }}
+                style={{ padding: '12px', width: '100%' }}
               >
-                🎒 Sync Check-in payload for "Lara Croft"
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+                Sync Check-in payload for "Lara Croft"
               </button>
 
               <div style={{ marginTop: '10px', fontSize: '0.8rem', color: 'var(--text-muted)', borderLeft: '3px solid var(--primary)', paddingLeft: '10px' }}>

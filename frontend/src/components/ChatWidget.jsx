@@ -102,11 +102,14 @@ export default function ChatWidget({
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '16px', color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>
             {/* Elegant Welcome Palm Tree SVG */}
             <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.85 }}>
-              <path d="M12 22c0-3.33-1-6.67-3-10" />
-              <path d="M12 2c4 1 7 4 7 8 0 1.5-.5 3-1.5 4" />
-              <path d="M12 2c1.5 3.5 4 6 7.5 7" />
-              <path d="M12 2C9 5.5 6 7 2 8" />
-              <circle cx="12" cy="22" r="1" />
+              <path d="M12 22c1-4 1-8 0-12" />
+              <path d="M5 22c2-.5 12-.5 14 0" />
+              <path d="M12 10c-3-2-7-1-9 2" />
+              <path d="M12 10c3-2 7-1 9 2" />
+              <path d="M12 10c-4 .5-8 3-9 7" />
+              <path d="M12 10c4 .5 8 3 9 7" />
+              <path d="M12 10c-1.5-4-5-6-8-6" />
+              <path d="M12 10c1.5-4 5-6 8-6" />
             </svg>
             <div>
               <div style={{ fontWeight: 500, fontSize: '1.15rem', color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', letterSpacing: '0.01em' }}>Welcome to Paradise</div>
