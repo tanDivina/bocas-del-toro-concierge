@@ -244,6 +244,35 @@ function App() {
     }
   };
 
+  const handleDeleteHotel = async (hotelId, e) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to remove this custom hotel? This will delete its brand design system from the database.")) {
+      return;
+    }
+    
+    addLog(`✨ Removing custom hotel brand: ${hotelId}`);
+    try {
+      const res = await fetch(`${API_BASE}/api/tenant/${hotelId}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        setTenantsList(prev => prev.filter(t => t._id !== hotelId));
+        addLog(`🟢 Custom hotel brand '${hotelId}' removed successfully from DB.`);
+        if (manualHotel === hotelId) {
+          setManualHotel("hotel_lacoralina");
+        }
+      } else {
+        throw new Error(data.detail || "Failed to delete hotel.");
+      }
+    } catch (err) {
+      console.error("Error in hotel deletion:", err);
+      addLog(`❌ Hotel Deletion Failed: ${err.message}`);
+      alert(`Hotel removal failed: ${err.message}`);
+    }
+  };
+
   // Custom Tour Register Form States
   const [customTourName, setCustomTourName] = useState('');
   const [customTourType, setCustomTourType] = useState('outdoor');
@@ -431,6 +460,29 @@ function App() {
           target.style.setProperty('--msg-agent-bg', `${activeBrand.primary_glow}`);
         }
       });
+
+      // Dynamically morph browser tab favicon to match selected hotel brand design system
+      if (activeBrand.primary_color) {
+        let link = document.querySelector("link[rel~='icon']");
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = 'icon';
+          document.getElementsByTagName('head')[0].appendChild(link);
+        }
+        link.type = 'image/svg+xml';
+        
+        const brandColor = activeBrand.primary_color;
+        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+          <circle cx="16" cy="16" r="15" fill="#121214" stroke="${brandColor}" stroke-width="2"/>
+          <circle cx="16" cy="16" r="9" fill="${brandColor}" opacity="0.25"/>
+          <path d="M6 24 C10 21, 22 21, 26 24" stroke="${brandColor}" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <path d="M16 11 Q19 11, 22 13 Q19 15, 16 14 Z" fill="${brandColor}"/>
+          <path d="M16 11 Q13 11, 10 13 Q13 15, 16 14 Z" fill="${brandColor}"/>
+          <path d="M16 11 Q18 8, 16 5 Q14 8, 16 11 Z" fill="${brandColor}"/>
+          <path d="M16 23 L16 12" stroke="${brandColor}" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>`;
+        link.href = `data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`;
+      }
     } else {
       targets.forEach(target => {
         target.style.removeProperty('--primary');
@@ -1445,12 +1497,41 @@ function App() {
                                 boxShadow: `0 0 8px ${accentColor}`
                               }} />
                               
-                              {/* Selection Indicator Check */}
-                              {isSelected && (
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                              )}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                {/* Delete Button (Only for custom onboarded hotels) */}
+                                {!tenantBrandsMock[hotel._id] && (
+                                  <button
+                                    onClick={(e) => handleDeleteHotel(hotel._id, e)}
+                                    title="Delete custom hotel"
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: 'var(--text-dim)',
+                                      cursor: 'pointer',
+                                      padding: '2px 6px',
+                                      borderRadius: '4px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: '0.85rem',
+                                      fontWeight: 'bold',
+                                      transition: 'all 0.2s',
+                                      zIndex: 10
+                                    }}
+                                    onMouseEnter={(e) => e.target.style.color = '#ef4444'}
+                                    onMouseLeave={(e) => e.target.style.color = 'var(--text-dim)'}
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                                
+                                {/* Selection Indicator Check */}
+                                {isSelected && (
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                )}
+                              </div>
                             </div>
                             
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>

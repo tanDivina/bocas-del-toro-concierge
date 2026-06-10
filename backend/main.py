@@ -566,7 +566,7 @@ async def extract_brand_endpoint(payload: BrandExtractPayload):
         clean_id = clean_id[:-1]
     hotel_id = f"hotel_{clean_id}"
 
-    # Scraping HTML metadata
+    # Scraping HTML metadata with robust extraction and cleaning
     html_content = ""
     scrape_success = False
     try:
@@ -577,18 +577,47 @@ async def extract_brand_endpoint(payload: BrandExtractPayload):
         if res.status_code == 200:
             scrape_success = True
             text = res.text
-            title_match = re.search(r'<title>(.*?)</title>', text, re.IGNORECASE)
-            title = title_match.group(1) if title_match else ""
             
-            # Find meta tags
-            metas = re.findall(r'<meta\s+[^>]*name=["\'](description|keywords)["\'][^>]*content=["\']([^"\']*)["\']', text, re.IGNORECASE)
-            meta_desc = " ".join([m[1] for m in metas])
+            # Extract page title
+            title_match = re.search(r'<title>(.*?)</title>', text, re.IGNORECASE | re.DOTALL)
+            title = title_match.group(1).strip() if title_match else ""
             
-            # Find headings
-            headings = re.findall(r'<h[12]>(.*?)</h[12]>', text, re.IGNORECASE)[:5]
-            headings_text = " ".join([re.sub(r'<[^>]*>', '', h) for h in headings])
+            # Parse all meta tags regardless of attribute order or casing
+            meta_tags = re.findall(r'<meta\s+([^>]+)>', text, re.IGNORECASE)
+            meta_properties = {}
+            for tag in meta_tags:
+                name_match = re.search(r'(?:name|property|itemprop)\s*=\s*["\']([^"\']+)["\']', tag, re.IGNORECASE)
+                content_match = re.search(r'content\s*=\s*["\']([^"\']*)["\']', tag, re.IGNORECASE)
+                if name_match and content_match:
+                    name = name_match.group(1).lower()
+                    content = content_match.group(1).strip()
+                    meta_properties[name] = content
             
-            html_content = f"Title: {title}\nMeta: {meta_desc}\nHeadings: {headings_text}\nBody Snippet: {text[:3000]}"
+            # Extract standard elements, OpenGraph social tags, and theme colors
+            desc = meta_properties.get("description") or meta_properties.get("og:description") or meta_properties.get("twitter:description") or ""
+            site_name = meta_properties.get("og:site_name") or meta_properties.get("og:title") or meta_properties.get("twitter:title") or ""
+            theme_color = meta_properties.get("theme-color") or ""
+            keywords = meta_properties.get("keywords") or ""
+            
+            # Extract up to 10 headings for context
+            headings = re.findall(r'<h[123]>(.*?)</h[123]>', text, re.IGNORECASE | re.DOTALL)[:10]
+            headings_text = " | ".join([re.sub(r'<[^>]*>', '', h).strip() for h in headings])
+            
+            # Clean HTML to strip heavy inline scripts, styling, and SVG nodes
+            clean_text = re.sub(r'<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>', '', text, flags=re.IGNORECASE)
+            clean_text = re.sub(r'<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>', '', clean_text, flags=re.IGNORECASE)
+            clean_text = re.sub(r'<svg\b[^<]*(?:(?!<\/svg>)<[^<]*)*<\/svg>', '', clean_text, flags=re.IGNORECASE)
+            clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+            
+            html_content = (
+                f"Page Title: {title}\n"
+                f"Brand Hint: {site_name}\n"
+                f"Meta Description: {desc}\n"
+                f"Meta Keywords: {keywords}\n"
+                f"Theme Color: {theme_color}\n"
+                f"Headings: {headings_text}\n"
+                f"Clean Body Snippet: {clean_text[:5000]}"
+            )
     except Exception as e:
         logger.warning(f"Failed to scrape URL {url}: {e}. Falling back to domain heuristics.")
 
@@ -663,6 +692,24 @@ async def extract_brand_endpoint(payload: BrandExtractPayload):
     except Exception as e:
         logger.error(f"Error in brand extraction: {e}")
         raise HTTPException(status_code=500, detail=f"Brand extraction failed: {str(e)}")
+
+@app.delete("/api/tenant/{hotel_id}")
+async def delete_tenant_endpoint(hotel_id: str):
+    """Deletes a custom onboarded tenant brand from the database."""
+    try:
+        # Prevent deletion of default system hotels
+        if hotel_id in ["hotel_nayara", "hotel_lacoralina", "hotel_sweetbocas", "hotel_bocasvillas", "hotel_redfrog"]:
+            raise HTTPException(status_code=400, detail="Cannot delete default system hotels.")
+            
+        result = db["tenants"].delete_one({"_id": hotel_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Hotel not found")
+            
+        logger.info(f"Successfully deleted custom hotel brand: {hotel_id}")
+        return {"success": True, "message": "Hotel successfully removed!"}
+    except Exception as e:
+        logger.error(f"Error deleting tenant {hotel_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Serve React Frontend Static Files in Production (if frontend/dist exists)
 FRONTEND_DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../frontend/dist")
