@@ -437,9 +437,7 @@ function App() {
 
   // Dynamic Live Theme Engine (overrides both documentElement and body for CSS specificity)
   useEffect(() => {
-    const activeBrand = (view === 'integrations' && integrationTab === 'manual')
-      ? (tenantBrandsMock[manualHotel] || tenantsList.find(t => t._id === manualHotel))
-      : tenantBrand;
+    const activeBrand = tenantBrand;
 
     const targets = [document.documentElement, document.body];
 
@@ -686,9 +684,7 @@ function App() {
     }
   };
 
-  const currentActiveBrand = (view === 'integrations' && integrationTab === 'manual')
-    ? (tenantBrandsMock[manualHotel] || tenantsList.find(t => t._id === manualHotel))
-    : tenantBrand;
+  const currentActiveBrand = tenantBrand;
 
   return (
     <div className="app-container">
