@@ -6,9 +6,11 @@ export default function ChatWidget({
   onRespondProposal, 
   loading,
   bookings,
-  tenantBrand
+  tenantBrand,
+  tours = []
 }) {
   const [input, setInput] = useState('');
+  const [selectedAlternativeId, setSelectedAlternativeId] = useState('');
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -20,6 +22,20 @@ export default function ChatWidget({
       return () => clearTimeout(timer);
     }
   }, [messages, loading]);
+
+  useEffect(() => {
+    if (tours && tours.length > 0) {
+      const indoor = tours.filter(t => t.type === 'indoor');
+      if (indoor.length > 0) {
+        setSelectedAlternativeId(prev => {
+          if (prev && indoor.some(t => t._id === prev)) {
+            return prev;
+          }
+          return indoor[0]._id;
+        });
+      }
+    }
+  }, [tours]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -127,6 +143,9 @@ export default function ChatWidget({
             const targetBooking = outdoorBookings.find(b => b.guest_id === (b.guest_id || 'g1'));
             const showProposalCard = isProposal && targetBooking;
 
+            const indoorTours = tours ? tours.filter(t => t.type === 'indoor') : [];
+            const selectedTour = tours ? tours.find(t => t._id === selectedAlternativeId) : null;
+
             return (
               <div 
                 key={index} 
@@ -178,10 +197,65 @@ export default function ChatWidget({
                       <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: '1.5', fontWeight: 300 }}>
                         We detected a logistical weather risk. Approve the proposal below to instantly swap this excursion for an available, covered substitute.
                       </div>
+
+                      {indoorTours.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Select Preferred Covered Excursion:</label>
+                          <select 
+                            value={selectedAlternativeId} 
+                            onChange={(e) => setSelectedAlternativeId(e.target.value)}
+                            style={{
+                              background: 'var(--slot-bg)',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: '8px',
+                              color: 'var(--text-primary)',
+                              padding: '8px 12px',
+                              fontSize: '0.82rem',
+                              outline: 'none',
+                              cursor: 'pointer',
+                              width: '100%',
+                              fontFamily: 'var(--font-sans)',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                              transition: 'var(--transition)'
+                            }}
+                          >
+                            {indoorTours.map(t => (
+                              <option key={t._id} value={t._id} style={{ background: 'var(--bg-color)', color: 'var(--text-primary)' }}>
+                                🏡 {t.name} (${t.price})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      {selectedTour && (
+                        <div style={{ 
+                          fontSize: '0.75rem', 
+                          color: 'var(--text-muted)', 
+                          background: 'rgba(255, 255, 255, 0.02)', 
+                          border: '1px solid var(--border-color)', 
+                          borderRadius: '8px', 
+                          padding: '10px 12px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px',
+                          lineHeight: '1.4'
+                        }}>
+                          <div style={{ fontWeight: 600, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                              <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            {selectedTour.location}
+                          </div>
+                          <div>{selectedTour.description}</div>
+                        </div>
+                      )}
+
                       <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
                         <button 
                           className="btn-primary" 
-                          onClick={() => onRespondProposal(targetBooking._id, targetBooking.date, 't4', true)}
+                          onClick={() => onRespondProposal(targetBooking._id, targetBooking.date, selectedAlternativeId || 't4', true)}
                           style={{ 
                             flex: 1, 
                             padding: '8px 14px', 

@@ -50,7 +50,7 @@ function App() {
   const [isSecureModeActive, setIsSecureModeActive] = useState(initialParams.secureActive);
   const [isSecureMode, setIsSecureMode] = useState(false);
   const [operatorFlyerToken, setOperatorFlyerToken] = useState('');
-  const lastGuestIdRef = React.useRef(initialParams.guestId);
+  const lastGuestIdRef = React.useRef(null);
   const lastRequestRef = React.useRef(0);
 
   const [view, setView] = useState(initialParams.view);
@@ -221,7 +221,7 @@ function App() {
 
   // 2. Load initial status from guestId if token is null (e.g. open sandbox switcher)
   useEffect(() => {
-    if (!token) {
+    if (!token && guestId !== lastGuestIdRef.current) {
       fetchStatus(guestId);
     }
   }, [guestId, token]);
@@ -287,6 +287,9 @@ function App() {
         setTenantBrand(data.tenant_brand || null);
         
         if (data.guest_id) {
+          if (data.guest_id !== guestId) {
+            setMessages([]); // Clear chat history to represent a fresh session for the new guest
+          }
           setGuestId(data.guest_id);
         }
         
@@ -719,13 +722,10 @@ function App() {
                       <button
                         key={g._id}
                         onClick={() => {
-                          transitionState(() => {
-                            setToken(null);
-                            setIsSecureModeActive(false);
-                            setIsGuestViewOnly(false);
-                            setGuestId(g._id);
-                            setMessages([]); // Clear chat history to represent a fresh session for the new guest
-                          });
+                          setToken(null);
+                          setIsSecureModeActive(false);
+                          setIsGuestViewOnly(false);
+                          fetchStatus(g._id);
                           setGuestDropdownOpen(false);
                         }}
                         style={{
@@ -898,6 +898,7 @@ function App() {
               loading={loading}
               bookings={bookings}
               tenantBrand={tenantBrand}
+              tours={tours}
             />
           </div>
         </div>
