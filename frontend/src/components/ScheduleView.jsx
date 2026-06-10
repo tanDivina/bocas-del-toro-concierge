@@ -69,18 +69,20 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
   return (
     <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '10px', fontFamily: 'var(--font-serif)', letterSpacing: '0.01em' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-serif)', letterSpacing: '0.01em' }}>
           {/* Custom SVG Palm Island Logo */}
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}>
-            <path d="M12 22c1-4 1-8 0-12" />
-            <path d="M5 22c2-.5 12-.5 14 0" />
-            <path d="M12 10c-3-2-7-1-9 2" />
-            <path d="M12 10c3-2 7-1 9 2" />
-            <path d="M12 10c-4 .5-8 3-9 7" />
-            <path d="M12 10c4 .5 8 3 9 7" />
-            <path d="M12 10c-1.5-4-5-6-8-6" />
-            <path d="M12 10c1.5-4 5-6 8-6" />
-          </svg>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22c1-4 1-8 0-12" />
+              <path d="M5 22c2-.5 12-.5 14 0" />
+              <path d="M12 10c-3-2-7-1-9 2" />
+              <path d="M12 10c3-2 7-1 9 2" />
+              <path d="M12 10c-4 .5-8 3-9 7" />
+              <path d="M12 10c4 .5 8 3 9 7" />
+              <path d="M12 10c-1.5-4-5-6-8-6" />
+              <path d="M12 10c1.5-4 5-6 8-6" />
+            </svg>
+          </div>
           Stay Activity Timeline
         </h2>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 300 }}>
@@ -100,21 +102,21 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
               className={supportsScrollTimeline ? 'scroll-reveal-item' : 'scroll-reveal-fallback'}
               style={{ 
                 background: 'var(--slot-bg)', 
-                borderRadius: '14px', 
+                borderRadius: '12px', 
                 border: hasRainAlert ? '1px solid var(--warning)' : '1px solid var(--border-color)',
                 padding: '16px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '14px',
+                gap: '12px',
                 position: 'relative',
                 transition: 'background-color 0.8s ease, border-color 0.8s ease'
               }}
             >
               {/* Day Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
                 <div>
                   <div style={{ fontSize: '0.92rem', fontWeight: 600, letterSpacing: '0.01em' }}>{date}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 300 }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 300 }}>
                     Day {dates.indexOf(date) + 1}
                   </div>
                 </div>
@@ -128,27 +130,33 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
                 >
                   {/* Fine Line SVG Weather Icons */}
                   {isHeavyRain ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 8.58" />
-                      <polyline points="13 11 9 17 12 17 10 23" />
-                    </svg>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 8.58" />
+                        <polyline points="13 11 9 17 12 17 10 23" />
+                      </svg>
+                    </div>
                   ) : (weather === 'Rainy' ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
-                      <path d="M16 13v8M8 13v8M12 15v8" />
-                    </svg>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
+                        <path d="M16 13v8M8 13v8M12 15v8" />
+                      </svg>
+                    </div>
                   ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="5" />
-                      <line x1="12" y1="1" x2="12" y2="3" />
-                      <line x1="12" y1="21" x2="12" y2="23" />
-                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                      <line x1="1" y1="12" x2="3" y2="12" />
-                      <line x1="21" y1="12" x2="23" y2="12" />
-                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                    </svg>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="5" />
+                        <line x1="12" y1="1" x2="12" y2="3" />
+                        <line x1="12" y1="21" x2="12" y2="23" />
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                        <line x1="1" y1="12" x2="3" y2="12" />
+                        <line x1="21" y1="12" x2="23" y2="12" />
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                      </svg>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -159,20 +167,22 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
                   background: isHeavyRain ? 'var(--error-glow)' : 'var(--warning-glow)', 
                   border: `1px solid ${isHeavyRain ? 'var(--error)' : 'var(--warning)'}`,
                   color: isHeavyRain ? 'var(--error)' : 'var(--warning)',
-                  borderRadius: '6px',
-                  padding: '6px 10px',
+                  borderRadius: '8px',
+                  padding: '4px 8px',
                   fontSize: '0.75rem',
                   fontWeight: 500,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '5px'
+                  gap: '4px'
                 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                    <line x1="12" y1="9" x2="12" y2="13" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                  </svg>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                  </div>
                   {isHeavyRain ? 'Storm Warning!' : 'Rain Forecasted'}
                 </div>
               )}
@@ -182,7 +192,7 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
                 const slotData = getBookingForSlot(date, slot);
                 
                 return (
-                  <div key={slot} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div key={slot} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 600, letterSpacing: '0.05em' }}>
                       {slot}
                     </div>
@@ -191,11 +201,11 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
                         style={{ 
                           background: slotData.tour?.type === 'indoor' ? 'hsla(38, 45%, 60%, 0.06)' : 'hsla(188, 55%, 38%, 0.05)',
                           border: `1px dashed ${slotData.tour?.type === 'indoor' ? 'var(--primary)' : 'var(--accent)'}`,
-                          borderRadius: '10px',
+                          borderRadius: '12px',
                           padding: '12px',
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: '6px',
+                          gap: '8px',
                           boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
                         }}
                       >
@@ -207,23 +217,25 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
                         
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 300 }}>
                           {/* Map Pin SVG Vector */}
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                            <circle cx="12" cy="10" r="3" />
-                          </svg>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                              <circle cx="12" cy="10" r="3" />
+                            </svg>
+                          </div>
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {slotData.tour?.location}
                           </span>
                         </div>
                         
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px', paddingTop: '4px', borderTop: '1px solid var(--border-color)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '4px', borderTop: '1px solid var(--border-color)' }}>
                           <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--primary)' }}>
                             ${slotData.price}
                           </span>
                           <span style={{ 
                             fontSize: '0.65rem', 
-                            padding: '2px 8px', 
-                            borderRadius: '4px',
+                            padding: '4px 8px', 
+                            borderRadius: '8px',
                             background: slotData.status === 'confirmed' ? 'hsla(188, 55%, 38%, 0.12)' : 'hsla(35, 80%, 55%, 0.12)',
                             color: slotData.status === 'confirmed' ? 'var(--accent)' : 'var(--warning)',
                             border: `1px solid ${slotData.status === 'confirmed' ? 'var(--accent)' : 'var(--warning)'}`,
@@ -239,8 +251,8 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
                         style={{ 
                           background: 'var(--slot-empty-bg)', 
                           border: '1px dashed var(--border-color)', 
-                          borderRadius: '10px',
-                          padding: '14px 10px',
+                          borderRadius: '12px',
+                          padding: '12px 8px',
                           fontSize: '0.75rem',
                           color: 'var(--text-dim)',
                           fontStyle: 'italic',

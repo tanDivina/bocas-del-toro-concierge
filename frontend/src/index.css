@@ -1,7 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&display=swap');
 
 :root {
-  --font-sans: 'Inter', sans-serif;
+  --font-sans: 'Geist', 'Inter', sans-serif;
   --font-serif: 'Playfair Display', serif;
   --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -35,8 +35,8 @@ body, body.theme-sunny {
   --msg-agent-bg: hsla(188, 55%, 38%, 0.1);
   
   background-image: 
-    radial-gradient(at 15% 15%, hsla(188, 55%, 38%, 0.12) 0px, transparent 45%),
-    radial-gradient(at 85% 85%, hsla(38, 45%, 60%, 0.08) 0px, transparent 45%);
+    radial-gradient(at 15% 15%, var(--accent-glow) 0px, transparent 45%),
+    radial-gradient(at 85% 85%, var(--primary-glow) 0px, transparent 45%);
 }
 
 /* Rainy Mode (Cozy Stormy Harbor - Deeper Steel Slate & Sand) */
@@ -65,8 +65,8 @@ body.theme-rainy {
   --msg-agent-bg: hsla(38, 35%, 50%, 0.08);
   
   background-image: 
-    radial-gradient(at 15% 15%, hsla(222, 22%, 58%, 0.06) 0px, transparent 45%),
-    radial-gradient(at 85% 85%, hsla(38, 35%, 45%, 0.03) 0px, transparent 45%);
+    radial-gradient(at 15% 15%, var(--primary-glow) 0px, transparent 45%),
+    radial-gradient(at 85% 85%, var(--accent-glow) 0px, transparent 45%);
 }
 
 * {
@@ -115,7 +115,7 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: hsla(38, 45%, 60%, 0.2);
+  background: var(--border-color);
   border-radius: 10px;
   transition: var(--transition);
 }
@@ -126,7 +126,7 @@ body {
 /* Elegant Buttons */
 .btn-primary {
   background: var(--primary);
-  color: #0d1117; /* High contrast dark text */
+  color: var(--primary-btn-text, #0d1117); /* High contrast adaptive text */
   border: none;
   font-family: var(--font-sans);
   font-weight: 600;

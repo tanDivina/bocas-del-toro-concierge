@@ -9,7 +9,7 @@ import json
 import time
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from dotenv import load_dotenv
 
@@ -229,9 +229,10 @@ async def get_status(guest_id: str = "g1", token: str = None):
         bookings = list(db["bookings"].find({}))
         guests = list(db["guests"].find({}))
         logistics = list(db["logistics"].find({}))
+        tenants = list(db["tenants"].find({}))
         
         # Clean mongo ObjectId to string for JSON serialization
-        for collection in [tours, bookings, guests, logistics]:
+        for collection in [tours, bookings, guests, logistics, tenants]:
             for doc in collection:
                 if "_id" in doc:
                     doc["_id"] = str(doc["_id"])
@@ -248,7 +249,7 @@ async def get_status(guest_id: str = "g1", token: str = None):
                 itinerary_md = generate_itinerary(guest_id)
             except Exception:
                 itinerary_md = ""
-
+ 
         # Fetch tenant brand configuration if guest exists
         current_guest = db["guests"].find_one({"_id": guest_id})
         tenant_brand = None
@@ -258,7 +259,7 @@ async def get_status(guest_id: str = "g1", token: str = None):
                 tenant_brand = db["tenants"].find_one({"_id": hotel_id})
                 if tenant_brand and "_id" in tenant_brand:
                     tenant_brand["_id"] = str(tenant_brand["_id"])
-
+ 
         return {
             "is_real_mongodb": is_real_mongo,
             "guest_id": guest_id,
@@ -266,6 +267,7 @@ async def get_status(guest_id: str = "g1", token: str = None):
             "bookings": bookings,
             "guests": guests,
             "logistics": logistics,
+            "tenants": tenants,
             "itinerary_markdown": itinerary_md,
             "tenant_brand": tenant_brand,
             "secure_token_active": token_valid
@@ -522,6 +524,145 @@ async def add_tour(payload: AddTourPayload):
     except Exception as e:
         logger.error(f"Error adding custom tour: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+class TenantBrandExtraction(BaseModel):
+    name: str = Field(description="The elegant name of the hotel, resort, or luxury lodge (e.g. 'Nayara Bocas del Toro')")
+    primary_color: str = Field(description="A curated, premium brand primary color in HSL format 'hsl(H, S%, L%)'. Must be dark-mode-friendly, highly vibrant, and elegant. Avoid raw dull colors; prefer sand gold, emerald green, warm amber, sea turquoise, hibiscus magenta.")
+    primary_glow: str = Field(description="A matching transparent glow in rgba format 'rgba(R, G, B, 0.12)' that perfectly corresponds to the HSL color.")
+    font: str = Field(description="A premium Google Font family name stack matching the resort's vibe (e.g. 'Playfair Display, Georgia, serif' or 'Outfit, Poppins, system-ui, sans-serif').")
+    welcome_message: str = Field(description="A highly bespoke, premium luxury welcome message for the resort's guest dashboard. It must sound warm, elite, and hospitable (e.g., 'Welcome to your Balinese wellness sanctuary in the Caribbean. Pura vida! 🌸'). Do NOT start with repetitious cliché greetings like 'respect, my friend', make it unique.")
+
+class BrandExtractPayload(BaseModel):
+    url: str
+
+@app.post("/api/tenant/extract-brand")
+async def extract_brand_endpoint(payload: BrandExtractPayload):
+    """Scrapes a URL and uses Gemini to extract and onboard a hotel's premium brand design system."""
+    import re
+    from urllib.parse import urlparse
+    from google import genai
+    from google.genai import types
+
+    url = payload.url.strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="URL cannot be empty")
+        
+    # Ensure URL has a scheme
+    if not url.startswith("http://") and not url.startswith("https://"):
+        url = "https://" + url
+
+    domain = ""
+    try:
+        parsed_url = urlparse(url)
+        domain = parsed_url.netloc or parsed_url.path
+        if domain.startswith("www."):
+            domain = domain[4:]
+    except Exception:
+        domain = url
+
+    # Clean domain to use as ID
+    clean_id = re.sub(r'[^a-zA-Z0-9]', '_', domain).lower()
+    if clean_id.endswith("_"):
+        clean_id = clean_id[:-1]
+    hotel_id = f"hotel_{clean_id}"
+
+    # Scraping HTML metadata
+    html_content = ""
+    scrape_success = False
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        res = requests.get(url, headers=headers, timeout=5)
+        if res.status_code == 200:
+            scrape_success = True
+            text = res.text
+            title_match = re.search(r'<title>(.*?)</title>', text, re.IGNORECASE)
+            title = title_match.group(1) if title_match else ""
+            
+            # Find meta tags
+            metas = re.findall(r'<meta\s+[^>]*name=["\'](description|keywords)["\'][^>]*content=["\']([^"\']*)["\']', text, re.IGNORECASE)
+            meta_desc = " ".join([m[1] for m in metas])
+            
+            # Find headings
+            headings = re.findall(r'<h[12]>(.*?)</h[12]>', text, re.IGNORECASE)[:5]
+            headings_text = " ".join([re.sub(r'<[^>]*>', '', h) for h in headings])
+            
+            html_content = f"Title: {title}\nMeta: {meta_desc}\nHeadings: {headings_text}\nBody Snippet: {text[:3000]}"
+    except Exception as e:
+        logger.warning(f"Failed to scrape URL {url}: {e}. Falling back to domain heuristics.")
+
+    # Formulate Prompt
+    if scrape_success:
+        prompt = (
+            f"You are given scraped metadata and HTML context from a website URL: {url}.\n"
+            f"HTML Context:\n{html_content}\n\n"
+            f"Analyze this luxury brand, its identity, name, and style. "
+            f"Create a complete premium dark-mode hospitality design system for this tenant."
+        )
+    else:
+        prompt = (
+            f"The website URL '{url}' could not be scraped directly. "
+            f"Using the domain name '{domain}', identify the brand/hotel name, and design "
+            f"a complete bespoke premium dark-mode hospitality design system for this tenant."
+        )
+
+    try:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="GEMINI_API_KEY is not set on the server")
+            
+        client = genai.Client()
+        response = client.models.generate_content(
+            model='gemini-3.1-flash-lite',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=TenantBrandExtraction,
+                system_instruction=(
+                    "You are an elite luxury hospitality brand manager and senior UI design system architect.\n"
+                    "Your job is to generate a beautifully coordinated brand color, typography, and messaging system.\n"
+                    "RULES:\n"
+                    "1. name: Determine the elegant brand name (e.g. 'Faro Blanco' or 'The Ritz-Carlton, Maui').\n"
+                    "2. primary_color: Pick a vibrant, highly elegant brand primary color in HSL format, e.g. 'hsl(215, 80%, 60%)'. "
+                    "Avoid dark/light backgrounds or dull colors; pick a primary color that will pop beautifully as buttons, selections, and glowing borders on a dark-mode obsidian dashboard.\n"
+                    "3. primary_glow: Generate a matching semi-transparent RGBA glow with 0.12 opacity, e.g. 'rgba(34, 150, 240, 0.12)'.\n"
+                    "4. font: Select a premium Google Font family name stack (e.g. 'Outfit, Poppins, sans-serif' or 'Playfair Display, Georgia, serif' or 'Montserrat, Inter, sans-serif').\n"
+                    "5. welcome_message: Create a warm, bespoke, luxury 1-sentence welcome message incorporating local elements, but DO NOT start it with cliches like 'respect' or 'my friend'. Keep it unique."
+                )
+            ),
+        )
+        
+        extracted_data = json.loads(response.text)
+        
+        # Save or update in database
+        tenant_doc = {
+            "_id": hotel_id,
+            "name": extracted_data.get("name", domain.capitalize()),
+            "primary_color": extracted_data.get("primary_color", "hsl(38, 45%, 60%)"),
+            "primary_glow": extracted_data.get("primary_glow", "rgba(212, 175, 55, 0.12)"),
+            "font": extracted_data.get("font", "Inter, sans-serif"),
+            "welcome_message": extracted_data.get("welcome_message", "Welcome to our paradise!"),
+            "theme": f"theme-custom-{clean_id}"
+        }
+        
+        db["tenants"].update_one(
+            {"_id": hotel_id},
+            {"$set": tenant_doc},
+            upsert=True
+        )
+        
+        logger.info(f"Successfully brand-onboarded hotel: {tenant_doc['name']} ({hotel_id})")
+        return {
+            "success": True,
+            "hotel_id": hotel_id,
+            "tenant_brand": tenant_doc,
+            "message": f"Successfully brand-onboarded {tenant_doc['name']}!"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in brand extraction: {e}")
+        raise HTTPException(status_code=500, detail=f"Brand extraction failed: {str(e)}")
 
 # Serve React Frontend Static Files in Production (if frontend/dist exists)
 FRONTEND_DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../frontend/dist")

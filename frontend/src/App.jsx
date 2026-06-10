@@ -91,6 +91,9 @@ function App() {
   const [welcomeCardGuestId, setWelcomeCardGuestId] = useState(initialParams.guestId);
   const [token, setToken] = useState(initialParams.token);
   const [tenantBrand, setTenantBrand] = useState(null);
+  const [tenantsList, setTenantsList] = useState([]);
+  const [extractionUrl, setExtractionUrl] = useState('');
+  const [loadingBrand, setLoadingBrand] = useState(false);
   const [isSecureModeActive, setIsSecureModeActive] = useState(initialParams.secureActive);
   const [isSecureMode, setIsSecureMode] = useState(false);
   const [operatorFlyerToken, setOperatorFlyerToken] = useState('');
@@ -174,7 +177,8 @@ function App() {
       'hotel_bocasvillas': 'Bocas Luxury Villas',
       'hotel_redfrog': 'Red Frog Beach Resort'
     };
-    const hotelNameSelected = hotelNamesMap[manualHotel] || 'La Coralina Island House';
+    const foundTenant = tenantsList.find(t => t._id === manualHotel);
+    const hotelNameSelected = foundTenant ? foundTenant.name : (hotelNamesMap[manualHotel] || 'La Coralina Island House');
 
     // Prepare payload
     const payload = {
@@ -199,6 +203,45 @@ function App() {
     setManualNotes('');
     setManualPreferences([]);
     setManualBookings([]);
+  };
+
+  const handleExtractBrand = async () => {
+    if (!extractionUrl.trim()) return;
+    setLoadingBrand(true);
+    addLog(`✨ Calling AI Brand Extractor endpoint with URL: ${extractionUrl}`);
+    try {
+      const res = await fetch(`${API_BASE}/api/tenant/extract-brand`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: extractionUrl })
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || "Brand extraction endpoint error.");
+      }
+      const data = await res.json();
+      if (data.success && data.tenant_brand) {
+        addLog(`🟢 Successfully brand-onboarded ${data.tenant_brand.name}! Generated theme: ${data.tenant_brand.theme}`);
+        
+        // Add or update in tenantsList
+        setTenantsList(prev => {
+          const filtered = prev.filter(t => t._id !== data.tenant_brand._id);
+          return [...filtered, data.tenant_brand];
+        });
+        
+        // Automatically select the newly created hotel!
+        setManualHotel(data.tenant_brand._id);
+        setExtractionUrl('');
+      } else {
+        throw new Error(data.message || "Failed to extract brand identity.");
+      }
+    } catch (err) {
+      console.error("Error in brand extraction:", err);
+      addLog(`❌ Brand Extraction Failed: ${err.message}`);
+      alert(`Brand onboarding failed: ${err.message}`);
+    } finally {
+      setLoadingBrand(false);
+    }
   };
 
   // Custom Tour Register Form States
@@ -329,6 +372,7 @@ function App() {
         setLogistics(data.logistics || []);
         setGuests(data.guests || []);
         setTenantBrand(data.tenant_brand || null);
+        setTenantsList(data.tenants || []);
         
         if (data.guest_id) {
           if (data.guest_id !== guestId) {
@@ -362,39 +406,43 @@ function App() {
     }
   };
 
-  // Dynamic Live Theme Engine
+  // Dynamic Live Theme Engine (overrides both documentElement and body for CSS specificity)
   useEffect(() => {
     const activeBrand = (view === 'integrations' && integrationTab === 'manual')
-      ? tenantBrandsMock[manualHotel]
+      ? (tenantBrandsMock[manualHotel] || tenantsList.find(t => t._id === manualHotel))
       : tenantBrand;
 
+    const targets = [document.documentElement, document.body];
+
     if (activeBrand) {
-      const root = document.documentElement;
-      root.style.setProperty('--primary', activeBrand.primary_color);
-      root.style.setProperty('--primary-glow', activeBrand.primary_glow);
-      
-      if (activeBrand.font) {
-        root.style.setProperty('--font-sans', activeBrand.font);
-      }
-      
-      if (activeBrand.primary_color && activeBrand.primary_color.includes('hsl')) {
-        const colorValue = activeBrand.primary_color.replace('hsl(', '').replace(')', '');
-        root.style.setProperty('--border-color', `hsla(${colorValue}, 0.16)`);
-        root.style.setProperty('--border-glow', `hsla(${colorValue}, 0.35)`);
-        root.style.setProperty('--msg-user-bg', `hsla(${colorValue}, 0.1)`);
-        root.style.setProperty('--msg-agent-bg', `${activeBrand.primary_glow}`);
-      }
+      targets.forEach(target => {
+        target.style.setProperty('--primary', activeBrand.primary_color);
+        target.style.setProperty('--primary-glow', activeBrand.primary_glow);
+        
+        if (activeBrand.font) {
+          target.style.setProperty('--font-sans', activeBrand.font);
+        }
+        
+        if (activeBrand.primary_color && activeBrand.primary_color.includes('hsl')) {
+          const colorValue = activeBrand.primary_color.replace('hsl(', '').replace(')', '');
+          target.style.setProperty('--border-color', `hsla(${colorValue}, 0.16)`);
+          target.style.setProperty('--border-glow', `hsla(${colorValue}, 0.35)`);
+          target.style.setProperty('--msg-user-bg', `hsla(${colorValue}, 0.1)`);
+          target.style.setProperty('--msg-agent-bg', `${activeBrand.primary_glow}`);
+        }
+      });
     } else {
-      const root = document.documentElement;
-      root.style.removeProperty('--primary');
-      root.style.removeProperty('--primary-glow');
-      root.style.removeProperty('--font-sans');
-      root.style.removeProperty('--border-color');
-      root.style.removeProperty('--border-glow');
-      root.style.removeProperty('--msg-user-bg');
-      root.style.removeProperty('--msg-agent-bg');
+      targets.forEach(target => {
+        target.style.removeProperty('--primary');
+        target.style.removeProperty('--primary-glow');
+        target.style.removeProperty('--font-sans');
+        target.style.removeProperty('--border-color');
+        target.style.removeProperty('--border-glow');
+        target.style.removeProperty('--msg-user-bg');
+        target.style.removeProperty('--msg-agent-bg');
+      });
     }
-  }, [tenantBrand, view, integrationTab, manualHotel]);
+  }, [tenantBrand, view, integrationTab, manualHotel, tenantsList]);
 
   // Generate secure token for Operator flyer on-the-fly
   useEffect(() => {
@@ -1348,32 +1396,90 @@ function App() {
                     </div>
                   </div>
 
-                  {/* Resort Dropdown Selector */}
+                  {/* Resort Option Cards Grid */}
                   <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '10px' }}>
                       Resort Property (Tenant Brand)
                     </label>
-                    <select 
-                      value={manualHotel}
-                      onChange={(e) => setManualHotel(e.target.value)}
-                      style={{
-                        background: 'rgba(15, 23, 42, 0.4)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        color: 'var(--text-primary)',
-                        padding: '10px 12px',
-                        fontSize: '0.88rem',
-                        outline: 'none',
-                        width: '100%',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <option value="hotel_nayara">Nayara Bocas del Toro (Eco Overwater Villas)</option>
-                      <option value="hotel_lacoralina">La Coralina Island House (Wellness Sanctuary)</option>
-                      <option value="hotel_sweetbocas">Sweet Bocas (Private Island Estate)</option>
-                      <option value="hotel_bocasvillas">Bocas Luxury Villas (Cliffside Eco-Retreat)</option>
-                      <option value="hotel_redfrog">Red Frog Beach Resort (Beachfront Jungle Playground)</option>
-                    </select>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                      gap: '12px',
+                      marginTop: '4px'
+                    }}>
+                      {[
+                        ...Object.entries(tenantBrandsMock).map(([id, b]) => ({ _id: id, ...b })),
+                        ...tenantsList.filter(t => !tenantBrandsMock[t._id])
+                      ].map(hotel => {
+                        const isSelected = manualHotel === hotel._id;
+                        const accentColor = hotel.primary_color;
+                        const previewGlow = hotel.primary_glow || 'rgba(255,255,255,0.05)';
+                        
+                        return (
+                          <div
+                            key={hotel._id}
+                            onClick={() => setManualHotel(hotel._id)}
+                            style={{
+                              background: isSelected ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.2)',
+                              border: '2px solid',
+                              borderColor: isSelected ? accentColor : 'var(--border-color)',
+                              borderRadius: '12px',
+                              padding: '14px',
+                              cursor: 'pointer',
+                              transition: 'all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '8px',
+                              position: 'relative',
+                              boxShadow: isSelected ? `0 0 15px ${previewGlow}` : 'none',
+                              transform: isSelected ? 'scale(1.02)' : 'none'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <div style={{
+                                width: '16px',
+                                height: '16px',
+                                borderRadius: '50%',
+                                background: accentColor,
+                                border: '2px solid var(--bg-color)',
+                                boxShadow: `0 0 8px ${accentColor}`
+                              }} />
+                              
+                              {/* Selection Indicator Check */}
+                              {isSelected && (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              )}
+                            </div>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <span style={{ fontSize: '0.85rem', fontWeight: 650, color: isSelected ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                                {hotel.name}
+                              </span>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {hotel.font ? hotel.font.split(',')[0] : 'Inter'}
+                              </span>
+                            </div>
+
+                            {/* Decorative Corner Glow */}
+                            {isSelected && (
+                              <div style={{
+                                position: 'absolute',
+                                bottom: 0,
+                                right: 0,
+                                width: '30px',
+                                height: '30px',
+                                background: accentColor,
+                                filter: 'blur(20px)',
+                                opacity: 0.3,
+                                pointerEvents: 'none'
+                              }} />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Two Column Grid: Arrival & Departure */}
@@ -1651,7 +1757,7 @@ function App() {
                     </h5>
                     
                     <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', maxWidth: '280px', margin: 0, lineHeight: '1.4' }}>
-                      Welcome to <strong>{manualHotel === 'hotel_nayara' ? 'Nayara Bocas del Toro' : manualHotel === 'hotel_lacoralina' ? 'La Coralina Island House' : manualHotel === 'hotel_sweetbocas' ? 'Sweet Bocas' : manualHotel === 'hotel_bocasvillas' ? 'Bocas Luxury Villas' : 'Red Frog Beach Resort'}</strong>. Scan this QR code to unlock your personalized, weather-intelligent eco-concierge companion.
+                      Welcome to <strong>{([ ...Object.entries(tenantBrandsMock).map(([id, b]) => ({ _id: id, ...b })), ...tenantsList ]).find(h => h._id === manualHotel)?.name || 'La Coralina Island House'}</strong>. Scan this QR code to unlock your personalized, weather-intelligent eco-concierge companion.
                     </p>
 
                     <div style={{
@@ -1685,6 +1791,67 @@ function App() {
                       <line x1="12" y1="8" x2="12.01" y2="8" />
                     </svg>
                     <span><strong>Upon submission:</strong> This guest will be recorded in MongoDB, a secure magic-link QR will generate, and you will be automatically redirected to their personalized dashboard.</span>
+                  </div>
+                </div>
+
+                {/* AI Brand Extractor Panel */}
+                <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', borderLeft: '4px solid var(--primary)', background: 'hsla(38, 45%, 60%, 0.02)' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
+                      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                    </svg>
+                    AI Brand Extractor
+                  </h4>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                    Onboard any custom hotel or resort instantly. Type their website URL below, and Gemini 3.1 Flash-Lite will extract their brand name, premium color palettes, custom typography, and elite greetings.
+                  </p>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="e.g. fourseasons.com"
+                        value={extractionUrl}
+                        onChange={(e) => setExtractionUrl(e.target.value)}
+                        style={{
+                          background: 'rgba(15, 23, 42, 0.4)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '8px',
+                          color: 'var(--text-primary)',
+                          padding: '10px 12px',
+                          fontSize: '0.88rem',
+                          outline: 'none',
+                          width: '100%'
+                        }}
+                      />
+                    </div>
+                    
+                    <button
+                      type="button"
+                      disabled={loadingBrand || !extractionUrl.trim()}
+                      onClick={handleExtractBrand}
+                      className="btn-primary"
+                      style={{ width: '100%', padding: '12px' }}
+                    >
+                      {loadingBrand ? (
+                        <>
+                          <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '6px', animation: 'spin 1s linear infinite' }}>
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" style={{ opacity: 0.25 }} />
+                            <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                          </svg>
+                          Extracting Brand Identity...
+                        </>
+                      ) : (
+                        <>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                            <polyline points="2 17 12 22 22 17" />
+                            <polyline points="2 12 12 17 22 12" />
+                          </svg>
+                          Extract Brand with Gemini
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>

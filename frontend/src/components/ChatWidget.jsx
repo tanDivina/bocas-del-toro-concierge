@@ -35,7 +35,11 @@ export default function ChatWidget({
           }
           return indoor[0]._id;
         });
+      } else {
+        setSelectedAlternativeId('');
       }
+    } else {
+      setSelectedAlternativeId('');
     }
   }, [tours, bookings]);
 
@@ -184,22 +188,24 @@ export default function ChatWidget({
                     <div 
                       className="glass-card" 
                       style={{ 
-                        padding: '18px', 
+                        padding: '16px', 
                         background: 'hsla(35, 80%, 55%, 0.05)',
                         border: '1px solid var(--warning)',
-                        borderRadius: '14px',
+                        borderRadius: '12px',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '14px',
+                        gap: '12px',
                         boxShadow: '0 8px 24px rgba(245, 158, 11, 0.08)'
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--warning)', fontWeight: 600, fontSize: '0.85rem', letterSpacing: '0.02em' }}>
-                        {/* Weather Alert SVG Line Icon */}
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 8.58" />
-                          <polyline points="13 11 9 17 12 17 10 23" />
-                        </svg>
+                        {/* Weather Alert SVG Line Icon - 18px size, stroke 1.5px, bound 24px */}
+                        <div style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 8.58" />
+                            <polyline points="13 11 9 17 12 17 10 23" />
+                          </svg>
+                        </div>
                         Weather Replan Dispatch
                       </div>
                       <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: '1.5', fontWeight: 300 }}>
@@ -211,7 +217,7 @@ export default function ChatWidget({
                           <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500, letterSpacing: '0.01em' }}>
                             Select Preferred Covered Excursion:
                           </label>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {indoorTours.map(t => {
                               const isSelected = selectedAlternativeId === t._id;
                               return (
@@ -223,8 +229,8 @@ export default function ChatWidget({
                                     textAlign: 'left',
                                     background: isSelected ? 'hsla(35, 80%, 55%, 0.12)' : 'rgba(255,255,255,0.02)',
                                     border: isSelected ? '1.5px solid var(--warning)' : '1px solid var(--border-color)',
-                                    borderRadius: '10px',
-                                    padding: '10px 14px',
+                                    borderRadius: '12px',
+                                    padding: '12px 16px',
                                     color: 'var(--text-primary)',
                                     cursor: 'pointer',
                                     display: 'flex',
@@ -247,18 +253,18 @@ export default function ChatWidget({
                                     }
                                   }}
                                 >
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
                                     <span style={{
                                       width: '16px',
                                       height: '16px',
                                       borderRadius: '50%',
-                                      border: isSelected ? '5px solid var(--warning)' : '1.5px solid var(--text-muted)',
+                                      border: isSelected ? '4px solid var(--warning)' : '1.5px solid var(--text-muted)',
                                       display: 'inline-block',
                                       boxSizing: 'border-box',
                                       transition: 'all 0.2s ease',
                                       flexShrink: 0
                                     }}></span>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 }}>
                                       <span style={{ fontWeight: isSelected ? 600 : 400, fontSize: '0.82rem', color: isSelected ? 'var(--warning)' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {t.name}
                                       </span>
@@ -272,8 +278,8 @@ export default function ChatWidget({
                                     fontWeight: 600, 
                                     color: isSelected ? 'var(--warning)' : 'var(--text-muted)',
                                     background: isSelected ? 'hsla(35, 80%, 55%, 0.15)' : 'rgba(255,255,255,0.04)',
-                                    padding: '3px 8px',
-                                    borderRadius: '6px',
+                                    padding: '4px 8px',
+                                    borderRadius: '8px',
                                     flexShrink: 0
                                   }}>
                                     ${t.price}
@@ -292,46 +298,63 @@ export default function ChatWidget({
                           background: 'rgba(255, 255, 255, 0.02)', 
                           border: '1px solid var(--border-color)', 
                           borderRadius: '8px', 
-                          padding: '10px 12px',
+                          padding: '12px',
                           display: 'flex',
                           flexDirection: 'column',
                           gap: '4px',
                           lineHeight: '1.4'
                         }}>
-                          <div style={{ fontWeight: 600, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="12" cy="12" r="10" />
-                              <line x1="12" y1="16" x2="12" y2="12" />
-                              <line x1="12" y1="8" x2="12.01" y2="8" />
-                            </svg>
+                          <div style={{ fontWeight: 600, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {/* Info Icon - 18px size, stroke 1.5px, bound 24px */}
+                            <div style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="16" x2="12" y2="12" />
+                                <line x1="12" y1="8" x2="12.01" y2="8" />
+                              </svg>
+                            </div>
                             Activity Description & Details
                           </div>
                           <div>{selectedTour.description}</div>
                         </div>
                       )}
 
-                      <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                      <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
                         <button 
                           className="btn-primary" 
                           onClick={() => onRespondProposal(targetBooking._id, targetBooking.date, selectedAlternativeId || (indoorTours[0]?._id || 't4'), true)}
                           style={{ 
                             flex: 1, 
-                            padding: '8px 14px', 
+                            padding: '12px 16px', 
                             fontSize: '0.8rem',
                             background: 'linear-gradient(135deg, var(--warning), hsl(25, 95%, 45%))',
                             boxShadow: '0 4px 12px rgba(245, 158, 11, 0.25)',
-                            color: 'white'
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
                           }}
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
+                          {/* Confirm Swap Icon - 18px size, stroke 1.5px, bound 24px */}
+                          <div style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          </div>
                           Confirm Swap
                         </button>
                         <button 
                           className="btn-secondary" 
                           onClick={() => onRespondProposal(targetBooking._id, targetBooking.date, null, false)}
-                          style={{ flex: 1, padding: '8px 14px', fontSize: '0.8rem' }}
+                          style={{ 
+                            flex: 1, 
+                            padding: '12px 16px', 
+                            fontSize: '0.8rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
                         >
                           Keep Original
                         </button>
@@ -349,19 +372,21 @@ export default function ChatWidget({
             <div style={{ 
               background: 'var(--msg-agent-bg)',
               border: '1px solid var(--border-color)',
-              borderRadius: '16px 16px 16px 4px',
-              padding: '12px 18px',
+              borderRadius: '16px',
+              padding: '12px 16px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
               color: 'var(--text-muted)',
               fontSize: '0.85rem'
             }}>
-              {/* Elegant Chat Bubble SVG Line Icon */}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}>
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-              <span className="dot-typing" style={{ paddingRight: '18px' }}>Butler is planning</span>
+              {/* Elegant Chat Bubble SVG Line Icon - 18px size, stroke 1.5px, bound 24px */}
+              <div style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}>
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </div>
+              <span className="dot-typing" style={{ paddingRight: '16px' }}>Butler is planning</span>
             </div>
           </div>
         )}
@@ -380,7 +405,7 @@ export default function ChatWidget({
             border: '1px solid var(--border-color)',
             borderRadius: '8px',
             color: 'var(--text-primary)',
-            padding: '11px 16px',
+            padding: '12px 16px',
             fontSize: '0.9rem',
             outline: 'none',
             transition: 'border-color 0.2s ease, opacity 0.2s ease',
@@ -394,12 +419,15 @@ export default function ChatWidget({
           type="submit" 
           className="btn-primary" 
           disabled={!input.trim() || loading}
-          style={{ padding: '11px 20px' }}
+          style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: '4px' }}
         >
-          <svg width="15" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13" />
-            <polygon points="22 2 15 22 11 13 2 9 22 2" />
-          </svg>
+          {/* Send Icon - 18px size, stroke 1.5px, bound 24px */}
+          <div style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </div>
           Send
         </button>
       </form>
