@@ -207,32 +207,81 @@ export default function ChatWidget({
                       </div>
 
                       {indoorTours.length > 0 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Select Preferred Covered Excursion:</label>
-                          <select 
-                            value={selectedAlternativeId} 
-                            onChange={(e) => setSelectedAlternativeId(e.target.value)}
-                            style={{
-                              background: 'var(--slot-bg)',
-                              border: '1px solid var(--border-color)',
-                              borderRadius: '8px',
-                              color: 'var(--text-primary)',
-                              padding: '8px 12px',
-                              fontSize: '0.82rem',
-                              outline: 'none',
-                              cursor: 'pointer',
-                              width: '100%',
-                              fontFamily: 'var(--font-sans)',
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                              transition: 'var(--transition)'
-                            }}
-                          >
-                            {indoorTours.map(t => (
-                              <option key={t._id} value={t._id}>
-                                🏡 {t.name} (${t.price})
-                              </option>
-                            ))}
-                          </select>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500, letterSpacing: '0.01em' }}>
+                            Select Preferred Covered Excursion:
+                          </label>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {indoorTours.map(t => {
+                              const isSelected = selectedAlternativeId === t._id;
+                              return (
+                                <button
+                                  key={t._id}
+                                  type="button"
+                                  onClick={() => setSelectedAlternativeId(t._id)}
+                                  style={{
+                                    textAlign: 'left',
+                                    background: isSelected ? 'hsla(35, 80%, 55%, 0.12)' : 'rgba(255,255,255,0.02)',
+                                    border: isSelected ? '1.5px solid var(--warning)' : '1px solid var(--border-color)',
+                                    borderRadius: '10px',
+                                    padding: '10px 14px',
+                                    color: 'var(--text-primary)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    gap: '12px',
+                                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                                    boxShadow: isSelected ? '0 4px 12px rgba(245, 158, 11, 0.12)' : 'none'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (!isSelected) {
+                                      e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!isSelected) {
+                                      e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+                                      e.currentTarget.style.borderColor = 'var(--border-color)';
+                                    }
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                                    <span style={{
+                                      width: '16px',
+                                      height: '16px',
+                                      borderRadius: '50%',
+                                      border: isSelected ? '5px solid var(--warning)' : '1.5px solid var(--text-muted)',
+                                      display: 'inline-block',
+                                      boxSizing: 'border-box',
+                                      transition: 'all 0.2s ease',
+                                      flexShrink: 0
+                                    }}></span>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                                      <span style={{ fontWeight: isSelected ? 600 : 400, fontSize: '0.82rem', color: isSelected ? 'var(--warning)' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {t.name}
+                                      </span>
+                                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        📍 {t.location}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div style={{ 
+                                    fontSize: '0.78rem', 
+                                    fontWeight: 600, 
+                                    color: isSelected ? 'var(--warning)' : 'var(--text-muted)',
+                                    background: isSelected ? 'hsla(35, 80%, 55%, 0.15)' : 'rgba(255,255,255,0.04)',
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    flexShrink: 0
+                                  }}>
+                                    ${t.price}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
 
@@ -251,10 +300,11 @@ export default function ChatWidget({
                         }}>
                           <div style={{ fontWeight: 600, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                              <circle cx="12" cy="10" r="3" />
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="12" y1="16" x2="12" y2="12" />
+                              <line x1="12" y1="8" x2="12.01" y2="8" />
                             </svg>
-                            {selectedTour.location}
+                            Activity Description & Details
                           </div>
                           <div>{selectedTour.description}</div>
                         </div>
