@@ -5,11 +5,50 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
     ? [...logistics].sort((a, b) => a.date.localeCompare(b.date)).map(l => l.date)
     : ["2026-05-30", "2026-05-31", "2026-06-01", "2026-06-02"];
 
-  // Extremely defensive check: filter bookings by the active guestId if provided 
-  // to ensure one guest's timeline never leaks onto another's under any view or condition
-  const activeBookings = guestId 
-    ? bookings.filter(b => b.guest_id === guestId)
-    : bookings;
+  // Fallback for browsers without native CSS scroll timelines support (e.g. Firefox)
+  const [supportsScrollTimeline, setSupportsScrollTimeline] = React.useState(true);
+
+  React.useEffect(() => {
+    const supported = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('animation-timeline: view()');
+    setSupportsScrollTimeline(supported);
+
+    if (!supported) {
+      let observer;
+      const timer = setTimeout(() => {
+        observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('reveal-visible');
+              } else {
+                entry.target.classList.remove('reveal-visible');
+              }
+            });
+          },
+          {
+            threshold: 0.05,
+            rootMargin: '0px 0px -10% 0px',
+          }
+        );
+
+        const items = document.querySelectorAll('.scroll-reveal-fallback');
+        items.forEach((item) => observer.observe(item));
+      }, 100);
+
+      return () => {
+        clearTimeout(timer);
+        if (observer) {
+          observer.disconnect();
+        }
+      };
+    }
+  }, [logistics, guestId]);
+
+  // Filter bookings strictly by the active guestId to ensure one guest's timeline 
+  // never leaks onto another's under any view, loading phase, or condition
+  const activeBookings = bookings.filter(
+    b => b.guest_id && guestId && String(b.guest_id) === String(guestId)
+  );
 
   const getBookingForSlot = (date, slot) => {
     const booking = activeBookings.find(b => b.date === date && b.slot === slot);
@@ -58,6 +97,7 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
           return (
             <div 
               key={date} 
+              className={supportsScrollTimeline ? 'scroll-reveal-item' : 'scroll-reveal-fallback'}
               style={{ 
                 background: 'var(--slot-bg)', 
                 borderRadius: '14px', 

@@ -87,6 +87,7 @@ export default function ChatWidget({
       {/* Messages area with scroll isolation & anchoring */}
       <div 
         ref={containerRef}
+        className="soft-edge-fade-y"
         style={{ 
           flex: 1, 
           padding: '20px', 

@@ -54,14 +54,46 @@ function App() {
 
   const [view, setView] = useState(initialParams.view);
 
+  // States & Refs for resilient custom dropdown menus
+  const [guestDropdownOpen, setGuestDropdownOpen] = useState(false);
+  const guestDropdownRef = React.useRef(null);
+  const [flyerDropdownOpen, setFlyerDropdownOpen] = useState(false);
+  const flyerDropdownRef = React.useRef(null);
+
+  // Transition Helper for silky same-document view morphs
+  const transitionState = (updateFn) => {
+    if (document.startViewTransition) {
+      document.startViewTransition(updateFn);
+    } else {
+      updateFn();
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (guestDropdownRef.current && !guestDropdownRef.current.contains(event.target)) {
+        setGuestDropdownOpen(false);
+      }
+      if (flyerDropdownRef.current && !flyerDropdownRef.current.contains(event.target)) {
+        setFlyerDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   // Unified navigation router to clear secure view-only session locks when exiting Guest Portal context
   const navigateToView = (newView) => {
-    if (newView !== 'guest') {
-      setToken(null);
-      setIsSecureModeActive(false);
-      setIsGuestViewOnly(false);
-    }
-    setView(newView);
+    transitionState(() => {
+      if (newView !== 'guest') {
+        setToken(null);
+        setIsSecureModeActive(false);
+        setIsGuestViewOnly(false);
+      }
+      setView(newView);
+    });
   };
 
   // Manual Check-in Form States
@@ -653,30 +685,79 @@ function App() {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Switch Guest Context:</span>
-            <select 
-              value={guestId} 
-              onChange={(e) => {
-                setToken(null);
-                setIsSecureModeActive(false);
-                setIsGuestViewOnly(false);
-                setGuestId(e.target.value);
-                setMessages([]); // Clear chat history to represent a fresh session for the new guest
-              }}
-              style={{
-                background: 'var(--slot-bg)',
-                border: '1px solid var(--border-color)',
-                color: 'var(--text-primary)',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                outline: 'none'
-              }}
-            >
-              {guests.map(g => (
-                <option key={g._id} value={g._id}>{g.name} ({g._id})</option>
-              ))}
-            </select>
+            <div className="custom-dropdown-container" ref={guestDropdownRef}>
+              <button 
+                id="guest-dropdown-trigger"
+                onClick={() => setGuestDropdownOpen(!guestDropdownOpen)}
+                className={`custom-dropdown-trigger ${guestDropdownOpen ? 'active' : ''}`}
+                style={{
+                  background: 'var(--slot-bg)',
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span>{guests.find(g => g._id === guestId)?.name || 'Select Guest'}</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: guestDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', color: 'var(--primary)' }}>
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              {guestDropdownOpen && (
+                <div className="custom-dropdown-menu">
+                  <div style={{ padding: '8px 12px', fontSize: '0.72rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-color)', marginBottom: '4px' }}>
+                    Select Reservation Context
+                  </div>
+                  <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    {guests.map(g => (
+                      <button
+                        key={g._id}
+                        onClick={() => {
+                          transitionState(() => {
+                            setToken(null);
+                            setIsSecureModeActive(false);
+                            setIsGuestViewOnly(false);
+                            setGuestId(g._id);
+                            setMessages([]); // Clear chat history to represent a fresh session for the new guest
+                          });
+                          setGuestDropdownOpen(false);
+                        }}
+                        style={{
+                          background: g._id === guestId ? 'var(--primary-glow)' : 'transparent',
+                          color: g._id === guestId ? 'var(--primary)' : 'var(--text-primary)',
+                          border: 'none',
+                          padding: '10px 12px',
+                          borderRadius: '6px',
+                          fontSize: '0.85rem',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          transition: 'all 0.15s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (g._id !== guestId) {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                            e.currentTarget.style.color = 'var(--primary)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (g._id !== guestId) {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.color = 'var(--text-primary)';
+                          }
+                        }}
+                      >
+                        <span style={{ fontWeight: g._id === guestId ? 600 : 400 }}>{g.name}</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{g._id}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -800,11 +881,11 @@ function App() {
       {/* Render Guest Portal View */}
       {view === 'guest' && (
         <div className="main-grid">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', viewTransitionName: 'schedule-view' }}>
             <ScheduleView bookings={bookings} tours={tours} logistics={logistics} guestId={guestId} />
             <ItineraryDoc itineraryMarkdown={itineraryMarkdown} guestId={guestId} />
           </div>
-          <div>
+          <div style={{ viewTransitionName: 'chat-widget' }}>
             <ChatWidget 
               messages={messages} 
               onSendMessage={handleSendMessage} 
@@ -820,7 +901,7 @@ function App() {
       {/* Render Operator Console View */}
       {view === 'operator' && (
         <div className="main-grid">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', viewTransitionName: 'schedule-view' }}>
             <ScheduleView bookings={bookings} tours={tours} logistics={logistics} guestId={guestId} />
             
             {/* Onboarding Welcome Flyer Generator */}
@@ -841,24 +922,74 @@ function App() {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '14px' }}>
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Select Checked-In Guest:</span>
-                <select 
-                  value={welcomeCardGuestId}
-                  onChange={(e) => setWelcomeCardGuestId(e.target.value)}
-                  style={{
-                    background: 'var(--slot-bg)',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--text-primary)',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    outline: 'none'
-                  }}
-                >
-                  {guests.map(g => (
-                    <option key={g._id} value={g._id}>{g.name} ({g.hotel_name})</option>
-                  ))}
-                </select>
+                <div className="custom-dropdown-container" ref={flyerDropdownRef}>
+                  <button 
+                    onClick={() => setFlyerDropdownOpen(!flyerDropdownOpen)}
+                    className={`custom-dropdown-trigger ${flyerDropdownOpen ? 'active' : ''}`}
+                    style={{
+                      background: 'var(--slot-bg)',
+                      borderColor: 'var(--border-color)',
+                      color: 'var(--text-primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <span>{guests.find(g => g._id === welcomeCardGuestId)?.name || 'Select Guest'}</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: flyerDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', color: 'var(--primary)' }}>
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                  {flyerDropdownOpen && (
+                    <div className="custom-dropdown-menu" style={{ left: 0, right: 'auto', transformOrigin: 'top left', positionAnchor: '--flyer-dropdown-anchor' }}>
+                      <div style={{ padding: '8px 12px', fontSize: '0.72rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-color)', marginBottom: '4px' }}>
+                        Checked-In Guests
+                      </div>
+                      <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        {guests.map(g => (
+                          <button
+                            key={g._id}
+                            onClick={() => {
+                              transitionState(() => {
+                                setWelcomeCardGuestId(g._id);
+                              });
+                              setFlyerDropdownOpen(false);
+                            }}
+                            style={{
+                              background: g._id === welcomeCardGuestId ? 'var(--primary-glow)' : 'transparent',
+                              color: g._id === welcomeCardGuestId ? 'var(--primary)' : 'var(--text-primary)',
+                              border: 'none',
+                              padding: '10px 12px',
+                              borderRadius: '6px',
+                              fontSize: '0.85rem',
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              transition: 'all 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (g._id !== welcomeCardGuestId) {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                                e.currentTarget.style.color = 'var(--primary)';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (g._id !== welcomeCardGuestId) {
+                                e.currentTarget.style.background = 'transparent';
+                                e.currentTarget.style.color = 'var(--text-primary)';
+                              }
+                            }}
+                          >
+                            <span style={{ fontWeight: g._id === welcomeCardGuestId ? 600 : 400 }}>{g.name}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{g.hotel_name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* SaaS B2B Security Toggle */}
@@ -969,7 +1100,7 @@ function App() {
               })()}
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', viewTransitionName: 'control-panel' }}>
             <ControlPanel 
               logistics={logistics} 
               onSimulate={handleSimulate} 
