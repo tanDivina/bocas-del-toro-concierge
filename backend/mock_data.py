@@ -160,6 +160,51 @@ def get_tours_data(dates):
                 dates["d2"]: 15
             },
             "tags": ["indoor", "social", "games", "culture"]
+        },
+        {
+            "_id": "t10",
+            "name": "Seahorse Point Whistle-Stop Sloth Tour",
+            "location": "Sea Horse Point (Sloth Point), Bahia Honda, Isla Bastimentos",
+            "description": "Embark on a guided stroll along the boardwalks of Seahorse Point, known locally as Sloth Point. Spot wild sloths up close in their natural canopy habitat and learn how the reserve protects local mangroves from boat damage. Rain or shine—high-end bubble umbrellas, waterproof capes, and boots are provided!",
+            "type": "outdoor",
+            "price": 5.0,
+            "capacity": 15,
+            "available_slots": {
+                dates["d0"]: 15,
+                dates["d1"]: 15,
+                dates["d2"]: 15
+            },
+            "tags": ["wildlife", "nature", "conservation", "sloths"]
+        },
+        {
+            "_id": "t11",
+            "name": "Seahorse Point Safari Lunch & Tamal Class",
+            "location": "Sea Horse Point (Sloth Point), Bahia Honda, Isla Bastimentos",
+            "description": "Indulge in a unique eco-culinary excursion! Support a local lady entrepreneur and learn the traditional art of making (and eating) authentic hand-wrapped tamales. Followed by a premium Safari Lunch at the covered Seagrass Café, featuring fresh-baked cookies, island tea brewed from local trees, and breathtaking sunset overwater views.",
+            "type": "indoor",
+            "price": 45.0,
+            "capacity": 8,
+            "available_slots": {
+                dates["d0"]: 8,
+                dates["d1"]: 8,
+                dates["d2"]: 8
+            },
+            "tags": ["food", "culture", "cooking", "indoor"]
+        },
+        {
+            "_id": "t12",
+            "name": "Seahorse Point Wet-Day Science & Art Workshops",
+            "location": "Sea Horse Point (Sloth Point), Bahia Honda, Isla Bastimentos",
+            "description": "Turn a rainy day into an educational adventure! Step inside the Seahorse Point research labs and pottery studio to make clay corals (learning coral ecology), experiment with microwave pottery, collect live marine samples for Plankton Science, craft giant flowers from fine Italian paper, or discover the tiny microworld of pinhead works of art critical to bird life.",
+            "type": "indoor",
+            "price": 25.0,
+            "capacity": 12,
+            "available_slots": {
+                dates["d0"]: 12,
+                dates["d1"]: 12,
+                dates["d2"]: 12
+            },
+            "tags": ["indoor", "science", "art", "ecology", "culture"]
         }
     ]
 
@@ -491,7 +536,12 @@ def seed_db():
             
         logger.info("Successfully seeded database collections.")
     else:
-        logger.info("Database already seeded. Skipping seeder.")
+        logger.info("Database already seeded. Ensuring all default tours exist...")
+        dates = get_dynamic_dates()
+        for tour in get_tours_data(dates):
+            if tours_coll.count_documents({"_id": tour["_id"]}) == 0:
+                tours_coll.insert_one(tour)
+                logger.info(f"Inserted missing tour: {tour['name']} ({tour['_id']})")
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
