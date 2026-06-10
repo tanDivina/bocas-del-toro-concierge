@@ -725,7 +725,10 @@ function App() {
                           setToken(null);
                           setIsSecureModeActive(false);
                           setIsGuestViewOnly(false);
-                          fetchStatus(g._id);
+                          setGuestId(g._id);
+                          setMessages([]);
+                          setBookings([]);
+                          setItineraryMarkdown('');
                           setGuestDropdownOpen(false);
                         }}
                         style={{
