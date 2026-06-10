@@ -1991,7 +1991,7 @@ function App() {
                       fontWeight: 700,
                       letterSpacing: '0.05em'
                     }}>
-                      ISLANDFLOW COMPANION
+                      ECO-CONCIERGE COMPANION
                     </div>
 
                     <h5 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '8px 0 0 0', fontFamily: 'var(--font-serif)', color: 'var(--primary)' }}>
