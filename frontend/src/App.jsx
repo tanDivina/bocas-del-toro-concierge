@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import ScheduleView from './components/ScheduleView';
 import ChatWidget from './components/ChatWidget';
 import ControlPanel from './components/ControlPanel';
@@ -60,10 +61,12 @@ function App() {
   const [flyerDropdownOpen, setFlyerDropdownOpen] = useState(false);
   const flyerDropdownRef = React.useRef(null);
 
-  // Transition Helper for silky same-document view morphs
+  // Transition Helper for silky same-document view morphs using React 19 flushSync
   const transitionState = (updateFn) => {
     if (document.startViewTransition) {
-      document.startViewTransition(updateFn);
+      document.startViewTransition(() => {
+        flushSync(updateFn);
+      });
     } else {
       updateFn();
     }
