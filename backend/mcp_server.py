@@ -200,6 +200,34 @@ def reschedule_booking(booking_id: str, new_date: str, alternative_tour_id: str 
             add_execution_log(f"📥 Tool **reschedule_booking** returned error: {res}")
             return res
             
+        guest_id = booking["guest_id"]
+        
+        # 1. Prevent duplicate bookings of the same activity during the stay
+        other_duplicate = db["bookings"].find_one({
+            "guest_id": guest_id,
+            "tour_id": target_tour_id,
+            "_id": {"$ne": booking_id}
+        })
+        if other_duplicate:
+            res = f"Error: The guest already has a booking for '{target_tour['name']}' on {other_duplicate.get('date')}. Under our sustainable eco-concierge guidelines, each unique experience is limited to once per stay."
+            add_execution_log(f"📥 Tool **reschedule_booking** returned error: {res}")
+            return res
+            
+        # 2. Prevent slot collision on the target date (cannot have two bookings in the same morning/afternoon slot)
+        target_slot = booking.get("slot", "morning")
+        slot_conflict = db["bookings"].find_one({
+            "guest_id": guest_id,
+            "date": new_date,
+            "slot": target_slot,
+            "_id": {"$ne": booking_id}
+        })
+        if slot_conflict:
+            conflict_tour = db["tours"].find_one({"_id": slot_conflict["tour_id"]})
+            conflict_tour_name = conflict_tour["name"] if conflict_tour else "another activity"
+            res = f"Error: Scheduling conflict. The guest already has a booking for '{conflict_tour_name}' in the {target_slot} slot on {new_date}."
+            add_execution_log(f"📥 Tool **reschedule_booking** returned error: {res}")
+            return res
+            
         # Check capacity/slots for the new slot
         slots = target_tour.get("available_slots", {})
         available = slots.get(new_date, 0)

@@ -444,28 +444,39 @@ async def sync_guest_from_pms(payload: PMSSyncPayload):
         # Clear existing bookings for this guest if replacing
         db["bookings"].delete_many({"guest_id": payload.guest_id})
 
-        # Insert new bookings
+        # Insert new bookings, protecting against duplicate tour bookings during PMS sync
+        seen_tours = set()
+        synced_count = 0
         for index, b in enumerate(payload.bookings):
+            tour_id = b.get("tour_id")
+            if not tour_id:
+                continue
+            if tour_id in seen_tours:
+                logger.warning(f"Discarding duplicate reservation for tour_id '{tour_id}' during PMS sync for guest {payload.guest_id}.")
+                continue
+            seen_tours.add(tour_id)
+            
             booking_id = f"b_pms_{payload.guest_id}_{index}"
             booking_doc = {
                 "_id": booking_id,
                 "guest_id": payload.guest_id,
-                "tour_id": b.get("tour_id"),
+                "tour_id": tour_id,
                 "date": b.get("date"),
                 "slot": b.get("slot", "morning"),
                 "status": b.get("status", "confirmed"),
                 "price": b.get("price", 0.0)
             }
             db["bookings"].insert_one(booking_doc)
+            synced_count += 1
 
         # Auto-generate initial itinerary for the guest
         generate_itinerary(payload.guest_id)
         clear_adk_session(payload.guest_id)
 
-        logger.info(f"Successfully synced guest {payload.name} ({payload.guest_id}) from PMS.")
+        logger.info(f"Successfully synced guest {payload.name} ({payload.guest_id}) from PMS with {synced_count} bookings.")
         return {
             "success": True,
-            "message": f"Guest {payload.name} and {len(payload.bookings)} bookings successfully synced via PMS API."
+            "message": f"Guest {payload.name} and {synced_count} bookings successfully synced via PMS API."
         }
     except Exception as e:
         logger.error(f"Error in PMS sync endpoint: {e}")
