@@ -899,6 +899,7 @@ function App() {
               bookings={bookings}
               tenantBrand={tenantBrand}
               tours={tours}
+              logistics={logistics}
             />
           </div>
         </div>

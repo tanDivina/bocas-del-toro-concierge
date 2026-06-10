@@ -7,7 +7,8 @@ export default function ChatWidget({
   loading,
   bookings,
   tenantBrand,
-  tours = []
+  tours = [],
+  logistics = []
 }) {
   const [input, setInput] = useState('');
   const [selectedAlternativeId, setSelectedAlternativeId] = useState('');
@@ -25,7 +26,8 @@ export default function ChatWidget({
 
   useEffect(() => {
     if (tours && tours.length > 0) {
-      const indoor = tours.filter(t => t.type === 'indoor');
+      const bookedTourIds = bookings ? bookings.map(b => b.tour_id) : [];
+      const indoor = tours.filter(t => t.type === 'indoor' && !bookedTourIds.includes(t._id));
       if (indoor.length > 0) {
         setSelectedAlternativeId(prev => {
           if (prev && indoor.some(t => t._id === prev)) {
@@ -35,7 +37,7 @@ export default function ChatWidget({
         });
       }
     }
-  }, [tours]);
+  }, [tours, bookings]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -140,10 +142,16 @@ export default function ChatWidget({
             const isUser = msg.role === 'user';
             const isProposal = !isUser && index === messages.length - 1 && isProposalMessage(msg.text);
             const outdoorBookings = bookings.filter(b => b.status === 'confirmed');
-            const targetBooking = outdoorBookings.find(b => b.guest_id === (b.guest_id || 'g1'));
+            
+            // Resolve the rainy day and find the matching target booking precisely
+            const rainyDates = logistics ? logistics.filter(l => l.alert === 'rain_warning' || l.weather === 'Rainy' || l.weather === 'Heavy Rain').map(l => l.date) : [];
+            const targetBooking = outdoorBookings.find(b => rainyDates.includes(b.date)) || outdoorBookings[0];
+            
             const showProposalCard = isProposal && targetBooking;
 
-            const indoorTours = tours ? tours.filter(t => t.type === 'indoor') : [];
+            // Filter out any activities the guest has already booked during their stay
+            const bookedTourIds = bookings ? bookings.map(b => b.tour_id) : [];
+            const indoorTours = tours ? tours.filter(t => t.type === 'indoor' && !bookedTourIds.includes(t._id)) : [];
             const selectedTour = tours ? tours.find(t => t._id === selectedAlternativeId) : null;
 
             return (
@@ -220,7 +228,7 @@ export default function ChatWidget({
                             }}
                           >
                             {indoorTours.map(t => (
-                              <option key={t._id} value={t._id} style={{ background: 'var(--bg-color)', color: 'var(--text-primary)' }}>
+                              <option key={t._id} value={t._id}>
                                 🏡 {t.name} (${t.price})
                               </option>
                             ))}
@@ -255,7 +263,7 @@ export default function ChatWidget({
                       <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
                         <button 
                           className="btn-primary" 
-                          onClick={() => onRespondProposal(targetBooking._id, targetBooking.date, selectedAlternativeId || 't4', true)}
+                          onClick={() => onRespondProposal(targetBooking._id, targetBooking.date, selectedAlternativeId || (indoorTours[0]?._id || 't4'), true)}
                           style={{ 
                             flex: 1, 
                             padding: '8px 14px', 

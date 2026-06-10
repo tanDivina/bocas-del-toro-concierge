@@ -321,10 +321,12 @@ async def simulate_weather(payload: WeatherSimulationPayload):
         # Instruct the agent to inspect the weather warning and coordinate reschedules if bookings exist
         alert_prompt = (
             f"[SYSTEM EVENT: Weather alert updated for {payload.date} to {payload.weather}. "
-            f"Please run a scheduling check using your tools. If this weather affects the guest's outdoor bookings on that day, "
-            f"identify indoor alternatives from the tours database and suggest a reschedule proposal directly in the chat. "
-            f"Explain the weather reason and details of the proposal clearly, and ask for their approval. "
-            f"If no outdoor tours are affected, reassure the guest that their itinerary remains optimal.]"
+            f"Please run a scheduling check using your tools. "
+            f"MANDATE: You are in PROPOSAL MODE. Under no circumstances are you allowed to call the `reschedule_booking` tool. "
+            f"If this weather affects the guest's outdoor bookings on that day, you must ONLY identify indoor alternatives "
+            f"from the tours database and list them in the chat as a reschedule proposal. The user will select and confirm their choice "
+            f"using the interactive dropdown on the proposal card in the frontend UI. Do NOT execute any database updates or "
+            f"rescheduling yourself in this turn! Explain the weather reason and details of the proposal clearly, and ask for their preference.]"
         )
         
         response_text, logs = run_concierge_agent(

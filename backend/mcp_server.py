@@ -100,6 +100,23 @@ def get_bookings(guest_id: str) -> str:
 def check_weather(date: str) -> str:
     """Check the simulated or real weather forecast and alert status for a specific date in Bocas del Toro."""
     add_execution_log(f"🔍 Agent decided to call **check_weather(date='{date}')**")
+    
+    # 1. Prioritize simulated weather from the local logistics database
+    # This ensures that when an operator manually sets weather (e.g. to Heavy Rain) for testing/evaluation,
+    # the simulation overrides any live OpenWeather lookup.
+    try:
+        logistics = db["logistics"].find_one({"date": date})
+        if logistics:
+            weather = logistics.get("weather", "Sunny")
+            alert = logistics.get("alert", "none")
+            if weather in ["Rainy", "Heavy Rain"] or alert != "none":
+                res_msg = f"Weather forecast for {date}: {weather} (Alert status: {alert.upper()})"
+                add_execution_log(f"📥 Tool **check_weather** returned simulated override: {weather} (Alert: {alert})")
+                return res_msg
+    except Exception as e:
+        logger.error(f"Error querying local simulation logistics database: {e}")
+
+    # 2. Query live OpenWeather API if available
     owm_key = os.getenv("OPENWEATHER_API_KEY")
     if owm_key:
         try:
@@ -126,14 +143,14 @@ def check_weather(date: str) -> str:
                     for f in matching_forecasts:
                         weather_items = f.get("weather", [])
                         if weather_items:
-                            main_weather = weather_items[0].get("main", "")
-                            desc = weather_items[0].get("description", "")
-                            descriptions.append(desc)
-                            
-                            if main_weather.lower() in ["rain", "drizzle", "thunderstorm"]:
-                                rain_detected = True
-                                if "heavy" in desc.lower() or "thunderstorm" in desc.lower():
-                                    heavy_rain_detected = True
+                          main_weather = weather_items[0].get("main", "")
+                          desc = weather_items[0].get("description", "")
+                          descriptions.append(desc)
+                          
+                          if main_weather.lower() in ["rain", "drizzle", "thunderstorm"]:
+                              rain_detected = True
+                              if "heavy" in desc.lower() or "thunderstorm" in desc.lower():
+                                  heavy_rain_detected = True
                         
                         temp_sum += f.get("main", {}).get("temp", 28)
                     
@@ -160,7 +177,7 @@ def check_weather(date: str) -> str:
             logger.error(f"Failed to query OpenWeather API: {e}")
             add_execution_log("⚠️ Live weather lookup failed. Falling back to simulation DB.")
 
-    # Fallback to local logistics database (Simulated weather)
+    # 3. Fallback to local logistics database (Simulated sunny weather)
     try:
         logistics = db["logistics"].find_one({"date": date})
         if not logistics:
