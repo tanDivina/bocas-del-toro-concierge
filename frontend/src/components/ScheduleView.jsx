@@ -1,12 +1,18 @@
 import React from 'react';
 
-export default function ScheduleView({ bookings, tours, logistics }) {
+export default function ScheduleView({ bookings, tours, logistics, guestId }) {
   const dates = logistics && logistics.length > 0
     ? [...logistics].sort((a, b) => a.date.localeCompare(b.date)).map(l => l.date)
     : ["2026-05-30", "2026-05-31", "2026-06-01", "2026-06-02"];
 
+  // Extremely defensive check: filter bookings by the active guestId if provided 
+  // to ensure one guest's timeline never leaks onto another's under any view or condition
+  const activeBookings = guestId 
+    ? bookings.filter(b => b.guest_id === guestId)
+    : bookings;
+
   const getBookingForSlot = (date, slot) => {
-    const booking = bookings.find(b => b.date === date && b.slot === slot);
+    const booking = activeBookings.find(b => b.date === date && b.slot === slot);
     if (!booking) return null;
     
     const tour = tours.find(t => t._id === booking.tour_id);

@@ -801,7 +801,7 @@ function App() {
       {view === 'guest' && (
         <div className="main-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <ScheduleView bookings={bookings.filter(b => b.guest_id === guestId)} tours={tours} logistics={logistics} />
+            <ScheduleView bookings={bookings} tours={tours} logistics={logistics} guestId={guestId} />
             <ItineraryDoc itineraryMarkdown={itineraryMarkdown} guestId={guestId} />
           </div>
           <div>
@@ -821,7 +821,7 @@ function App() {
       {view === 'operator' && (
         <div className="main-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <ScheduleView bookings={bookings.filter(b => b.guest_id === guestId)} tours={tours} logistics={logistics} />
+            <ScheduleView bookings={bookings} tours={tours} logistics={logistics} guestId={guestId} />
             
             {/* Onboarding Welcome Flyer Generator */}
             <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
