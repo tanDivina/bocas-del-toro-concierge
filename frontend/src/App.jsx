@@ -1813,10 +1813,58 @@ function App() {
                                 checked={isChecked}
                                 onChange={(e) => {
                                   if (e.target.checked) {
+                                    // Calculate the next available timeslot based on existing selections
+                                    const slotOrder = { morning: 0, afternoon: 1, evening: 2 };
+                                    const getSlotOrder = (s) => (slotOrder[s?.toLowerCase()] !== undefined ? slotOrder[s?.toLowerCase()] : 99);
+                                    
+                                    let nextDate = manualStayStart;
+                                    let nextSlot = tour.slots?.[0] || 'morning';
+
+                                    if (manualBookings.length > 0) {
+                                      // Sort existing bookings chronologically
+                                      const sortedBookings = [...manualBookings].sort((a, b) => {
+                                        if (a.date !== b.date) {
+                                          return a.date.localeCompare(b.date);
+                                        }
+                                        return getSlotOrder(a.slot) - getSlotOrder(b.slot);
+                                      });
+                                      
+                                      const latest = sortedBookings[sortedBookings.length - 1];
+                                      const latestDateStr = latest.date;
+                                      const latestSlot = latest.slot;
+                                      const latestSlotOrder = getSlotOrder(latestSlot);
+                                      
+                                      // Check if this tour has any slots on the same day that are chronologically after the latest booked slot
+                                      const tourSlots = tour.slots || ['morning', 'afternoon'];
+                                      const laterSlots = tourSlots.filter(s => getSlotOrder(s) > latestSlotOrder);
+                                      
+                                      if (laterSlots.length > 0) {
+                                        // Use the same date, but the first chronological later slot
+                                        nextDate = latestDateStr;
+                                        laterSlots.sort((a, b) => getSlotOrder(a) - getSlotOrder(b));
+                                        nextSlot = laterSlots[0];
+                                      } else {
+                                        // Move to the next day
+                                        const currentDate = new Date(latestDateStr + 'T12:00:00'); // set noon to avoid timezone anomalies
+                                        currentDate.setDate(currentDate.getDate() + 1);
+                                        const nextDayStr = currentDate.toISOString().split('T')[0];
+                                        
+                                        if (manualStayEnd && nextDayStr <= manualStayEnd) {
+                                          nextDate = nextDayStr;
+                                        } else {
+                                          nextDate = manualStayEnd || latestDateStr;
+                                        }
+                                        
+                                        // Sort tour slots chronologically and take the first one
+                                        const sortedTourSlots = [...tourSlots].sort((a, b) => getSlotOrder(a) - getSlotOrder(b));
+                                        nextSlot = sortedTourSlots[0] || 'morning';
+                                      }
+                                    }
+
                                     setManualBookings(prev => [...prev, {
                                       tour_id: tour._id,
-                                      date: manualStayStart,
-                                      slot: tour.slots?.[0] || 'morning',
+                                      date: nextDate,
+                                      slot: nextSlot,
                                       price: tour.price || 0.0
                                     }]);
                                   } else {
