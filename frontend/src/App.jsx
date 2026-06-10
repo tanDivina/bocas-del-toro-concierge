@@ -470,14 +470,15 @@ function App() {
         link.type = 'image/svg+xml';
         
         const brandColor = activeBrand.primary_color;
-        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-          <circle cx="16" cy="16" r="15" fill="#121214" stroke="${brandColor}" stroke-width="2"/>
-          <circle cx="16" cy="16" r="9" fill="${brandColor}" opacity="0.25"/>
-          <path d="M6 24 C10 21, 22 21, 26 24" stroke="${brandColor}" stroke-width="2" stroke-linecap="round" fill="none"/>
-          <path d="M16 11 Q19 11, 22 13 Q19 15, 16 14 Z" fill="${brandColor}"/>
-          <path d="M16 11 Q13 11, 10 13 Q13 15, 16 14 Z" fill="${brandColor}"/>
-          <path d="M16 11 Q18 8, 16 5 Q14 8, 16 11 Z" fill="${brandColor}"/>
-          <path d="M16 23 L16 12" stroke="${brandColor}" stroke-width="2.5" stroke-linecap="round"/>
+        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${brandColor}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22c1-4 1-8 0-12" />
+          <path d="M5 22c2-.5 12-.5 14 0" />
+          <path d="M12 10c-3-2-7-1-9 2" />
+          <path d="M12 10c3-2 7-1 9 2" />
+          <path d="M12 10c-4 .5-8 3-9 7" />
+          <path d="M12 10c4 .5 8 3 9 7" />
+          <path d="M12 10c-1.5-4-5-6-8-6" />
+          <path d="M12 10c1.5-4 5-6 8-6" />
         </svg>`;
         link.href = `data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`;
       }
