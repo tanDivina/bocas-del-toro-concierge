@@ -31,6 +31,50 @@ const getInitialParams = () => {
 
 const initialParams = getInitialParams();
 
+// Map of standard tenant brand configurations for instantaneous operator design system previews
+const tenantBrandsMock = {
+  hotel_nayara: {
+    name: "Nayara Bocas del Toro",
+    primary_color: "hsl(188, 86%, 38%)",
+    primary_glow: "rgba(15, 186, 211, 0.12)",
+    font: "Inter, system-ui, sans-serif",
+    welcome_message: "Your luxury overwater villa experience begins now. Pura vida! 🌴",
+    theme: "theme-ocean"
+  },
+  hotel_lacoralina: {
+    name: "La Coralina Island House",
+    primary_color: "hsl(45, 60%, 55%)",
+    primary_glow: "rgba(212, 175, 55, 0.12)",
+    font: "var(--font-serif), Georgia, serif",
+    welcome_message: "Welcome to your Balinese wellness sanctuary in the Caribbean. Pura vida! 🌸",
+    theme: "theme-wellness"
+  },
+  hotel_sweetbocas: {
+    name: "Sweet Bocas",
+    primary_color: "hsl(330, 75%, 45%)",
+    primary_glow: "rgba(219, 39, 119, 0.12)",
+    font: "Outfit, Poppins, system-ui, sans-serif",
+    welcome_message: "Step into absolute, sustainable luxury on our private island estate. Respect! 🌺",
+    theme: "theme-hibiscus"
+  },
+  hotel_bocasvillas: {
+    name: "Bocas Luxury Villas",
+    primary_color: "hsl(150, 65%, 35%)",
+    primary_glow: "rgba(34, 197, 94, 0.12)",
+    font: "Roboto, system-ui, sans-serif",
+    welcome_message: "Your boutique cliffside eco-villa retreat is ready, my friend. No stress! 🦜",
+    theme: "theme-forest"
+  },
+  hotel_redfrog: {
+    name: "Red Frog Beach Resort",
+    primary_color: "hsl(15, 85%, 50%)",
+    primary_glow: "rgba(249, 115, 22, 0.12)",
+    font: "Poppins, Inter, system-ui, sans-serif",
+    welcome_message: "Welcome to our vibrant beachfront jungle playground. Pura vida! 🐸",
+    theme: "theme-volcano"
+  }
+};
+
 function App() {
   const [bookings, setBookings] = useState([]);
   const [tours, setTours] = useState([]);
@@ -320,21 +364,25 @@ function App() {
 
   // Dynamic Live Theme Engine
   useEffect(() => {
-    if (tenantBrand) {
+    const activeBrand = (view === 'integrations' && integrationTab === 'manual')
+      ? tenantBrandsMock[manualHotel]
+      : tenantBrand;
+
+    if (activeBrand) {
       const root = document.documentElement;
-      root.style.setProperty('--primary', tenantBrand.primary_color);
-      root.style.setProperty('--primary-glow', tenantBrand.primary_glow);
+      root.style.setProperty('--primary', activeBrand.primary_color);
+      root.style.setProperty('--primary-glow', activeBrand.primary_glow);
       
-      if (tenantBrand.font) {
-        root.style.setProperty('--font-sans', tenantBrand.font);
+      if (activeBrand.font) {
+        root.style.setProperty('--font-sans', activeBrand.font);
       }
       
-      if (tenantBrand.primary_color.includes('hsl')) {
-        const colorValue = tenantBrand.primary_color.replace('hsl(', '').replace(')', '');
+      if (activeBrand.primary_color && activeBrand.primary_color.includes('hsl')) {
+        const colorValue = activeBrand.primary_color.replace('hsl(', '').replace(')', '');
         root.style.setProperty('--border-color', `hsla(${colorValue}, 0.16)`);
         root.style.setProperty('--border-glow', `hsla(${colorValue}, 0.35)`);
         root.style.setProperty('--msg-user-bg', `hsla(${colorValue}, 0.1)`);
-        root.style.setProperty('--msg-agent-bg', `${tenantBrand.primary_glow}`);
+        root.style.setProperty('--msg-agent-bg', `${activeBrand.primary_glow}`);
       }
     } else {
       const root = document.documentElement;
@@ -346,7 +394,7 @@ function App() {
       root.style.removeProperty('--msg-user-bg');
       root.style.removeProperty('--msg-agent-bg');
     }
-  }, [tenantBrand]);
+  }, [tenantBrand, view, integrationTab, manualHotel]);
 
   // Generate secure token for Operator flyer on-the-fly
   useEffect(() => {
@@ -675,9 +723,23 @@ function App() {
 
       {/* Guest Profile Switcher banner (visible in portals to switch contexts) */}
       {((view === 'guest' && !isGuestViewOnly) || view === 'operator') && (
-        <div className="glass-card" style={{ padding: '12px 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'hsla(188, 55%, 38%, 0.03)', border: '1px solid var(--border-color)' }}>
+        <div style={{ 
+          padding: '14px 20px', 
+          marginBottom: '20px', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          flexWrap: 'wrap',
+          gap: '16px',
+          background: 'var(--panel-bg)', 
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '16px',
+          boxShadow: 'var(--shadow-sm)'
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary-glow)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary-glow)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', flexShrink: 0 }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
@@ -691,80 +753,78 @@ function App() {
             </div>
           </div>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Switch Guest Context:</span>
-            <div className="custom-dropdown-container" ref={guestDropdownRef}>
-              <button 
-                id="guest-dropdown-trigger"
-                onClick={() => setGuestDropdownOpen(!guestDropdownOpen)}
-                className={`custom-dropdown-trigger ${guestDropdownOpen ? 'active' : ''}`}
-                style={{
-                  background: 'var(--slot-bg)',
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--text-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <span>{guests.find(g => g._id === guestId)?.name || 'Select Guest'}</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: guestDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', color: 'var(--primary)' }}>
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-              {guestDropdownOpen && (
-                <div className="custom-dropdown-menu">
-                  <div style={{ padding: '8px 12px', fontSize: '0.72rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-color)', marginBottom: '4px' }}>
-                    Select Reservation Context
-                  </div>
-                  <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    {guests.map(g => (
-                      <button
-                        key={g._id}
-                        onClick={() => {
-                          setToken(null);
-                          setIsSecureModeActive(false);
-                          setIsGuestViewOnly(false);
-                          setGuestId(g._id);
-                          setMessages([]);
-                          setBookings([]);
-                          setItineraryMarkdown('');
-                          setGuestDropdownOpen(false);
-                        }}
-                        style={{
-                          background: g._id === guestId ? 'var(--primary-glow)' : 'transparent',
-                          color: g._id === guestId ? 'var(--primary)' : 'var(--text-primary)',
-                          border: 'none',
-                          padding: '10px 12px',
-                          borderRadius: '6px',
-                          fontSize: '0.85rem',
-                          textAlign: 'left',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          transition: 'all 0.15s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          if (g._id !== guestId) {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                            e.currentTarget.style.color = 'var(--primary)';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (g._id !== guestId) {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.color = 'var(--text-primary)';
-                          }
-                        }}
-                      >
-                        <span style={{ fontWeight: g._id === guestId ? 600 : 400 }}>{g.name}</span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{g._id}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>Switch Guest Context:</span>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              {guests.map(g => {
+                const isActive = g._id === guestId;
+                return (
+                  <button
+                    key={g._id}
+                    onClick={() => {
+                      setToken(null);
+                      setIsSecureModeActive(false);
+                      setIsGuestViewOnly(false);
+                      setGuestId(g._id);
+                      setMessages([]);
+                      setBookings([]);
+                      setItineraryMarkdown('');
+                    }}
+                    style={{
+                      background: isActive ? 'var(--primary)' : 'rgba(255, 255, 255, 0.02)',
+                      color: isActive ? '#000' : 'var(--text-primary)',
+                      border: isActive ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                      borderRadius: '30px',
+                      padding: '6px 14px',
+                      fontSize: '0.8rem',
+                      fontWeight: isActive ? 600 : 400,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                      boxShadow: isActive ? '0 4px 12px var(--primary-glow)' : 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+                        e.currentTarget.style.borderColor = 'var(--primary)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                        e.currentTarget.style.borderColor = 'var(--border-color)';
+                      }
+                    }}
+                  >
+                    <div style={{
+                      width: '16px',
+                      height: '16px',
+                      borderRadius: '50%',
+                      background: isActive ? 'rgba(0, 0, 0, 0.2)' : 'var(--primary-glow)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.62rem',
+                      color: isActive ? '#000' : 'var(--primary)',
+                      fontWeight: 'bold',
+                      textTransform: 'uppercase',
+                      flexShrink: 0
+                    }}>
+                      {g.name ? g.name[0] : 'G'}
+                    </div>
+                    <span>{g.name}</span>
+                    <span style={{ 
+                      fontSize: '0.68rem', 
+                      color: isActive ? 'rgba(0, 0, 0, 0.5)' : 'var(--text-muted)',
+                      fontWeight: 500
+                    }}>
+                      {g._id}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
