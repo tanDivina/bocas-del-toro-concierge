@@ -279,34 +279,36 @@ function App() {
         return;
       }
       
-      setBookings(data.bookings || []);
-      setTours(data.tours || []);
-      setLogistics(data.logistics || []);
-      setGuests(data.guests || []);
-      setTenantBrand(data.tenant_brand || null);
-      
-      if (data.guest_id) {
-        setGuestId(data.guest_id);
-      }
-      
-      const newMarkdown = data.itinerary_markdown || '';
-      setItineraryMarkdown(prev => {
-        // Trigger the updated itinerary popup modal ONLY if the guest ID remains the same
-        // (This avoids triggering the modal merely when switching active guest profiles)
-        if (lastGuestIdRef.current === data.guest_id) {
-          if (prev && newMarkdown && prev !== newMarkdown) {
-            setShowItineraryModal(true);
-          }
+      transitionState(() => {
+        setBookings(data.bookings || []);
+        setTours(data.tours || []);
+        setLogistics(data.logistics || []);
+        setGuests(data.guests || []);
+        setTenantBrand(data.tenant_brand || null);
+        
+        if (data.guest_id) {
+          setGuestId(data.guest_id);
         }
-        return newMarkdown;
+        
+        const newMarkdown = data.itinerary_markdown || '';
+        setItineraryMarkdown(prev => {
+          // Trigger the updated itinerary popup modal ONLY if the guest ID remains the same
+          // (This avoids triggering the modal merely when switching active guest profiles)
+          if (lastGuestIdRef.current === data.guest_id) {
+            if (prev && newMarkdown && prev !== newMarkdown) {
+              setShowItineraryModal(true);
+            }
+          }
+          return newMarkdown;
+        });
+        
+        // Update our guest tracker ref with the newly loaded guest ID
+        if (data.guest_id) {
+          lastGuestIdRef.current = data.guest_id;
+        }
+        
+        setIsRealMongo(data.is_real_mongodb);
       });
-      
-      // Update our guest tracker ref with the newly loaded guest ID
-      if (data.guest_id) {
-        lastGuestIdRef.current = data.guest_id;
-      }
-      
-      setIsRealMongo(data.is_real_mongodb);
     } catch (error) {
       console.error("Error fetching status:", error);
       addLog(`❌ Server Error: ${error.message}. Is the backend running on port 8000?`);

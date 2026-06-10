@@ -58,7 +58,7 @@ def get_runner():
         
         adk_agent = Agent(
             name="BocasEcoConciergeAgent",
-            model="gemini-3.0-flash",
+            model="gemini-2.5-flash",
             instruction=SYSTEM_PROMPT,
             tools=[get_tours, get_bookings, check_weather, reschedule_booking, generate_itinerary]
         )
