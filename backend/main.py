@@ -531,6 +531,7 @@ class TenantBrandExtraction(BaseModel):
     primary_glow: str = Field(description="A matching transparent glow in rgba format 'rgba(R, G, B, 0.12)' that perfectly corresponds to the HSL color.")
     font: str = Field(description="A premium Google Font family name stack matching the resort's vibe (e.g. 'Playfair Display, Georgia, serif' or 'Outfit, Poppins, system-ui, sans-serif').")
     welcome_message: str = Field(description="A highly bespoke, premium luxury welcome message for the resort's guest dashboard. It must sound warm, elite, and hospitable (e.g., 'Welcome to your Balinese wellness sanctuary in the Caribbean. Pura vida! 🌸'). Do NOT start with repetitious cliché greetings like 'respect, my friend', make it unique.")
+    logo_url: Optional[str] = Field(None, description="The brand's logo image URL. Find it in meta properties (e.g. 'og:image') or image source links if found in HTML. If not found or if the scrape failed, generate a high-quality fallback using Clearbit API 'https://logo.clearbit.com/{domain}' or Google Favicon API 'https://www.google.com/s2/favicons?sz=128&domain={domain}'. Ensure it is a valid, secure image URL.")
 
 class BrandExtractPayload(BaseModel):
     url: str
@@ -657,7 +658,8 @@ async def extract_brand_endpoint(payload: BrandExtractPayload):
                     "Avoid dark/light backgrounds or dull colors; pick a primary color that will pop beautifully as buttons, selections, and glowing borders on a dark-mode obsidian dashboard.\n"
                     "3. primary_glow: Generate a matching semi-transparent RGBA glow with 0.12 opacity, e.g. 'rgba(34, 150, 240, 0.12)'.\n"
                     "4. font: Select a premium Google Font family name stack (e.g. 'Outfit, Poppins, sans-serif' or 'Playfair Display, Georgia, serif' or 'Montserrat, Inter, sans-serif').\n"
-                    "5. welcome_message: Create a warm, bespoke, luxury 1-sentence welcome message incorporating local elements, but DO NOT start it with cliches like 'respect' or 'my friend'. Keep it unique."
+                    "5. welcome_message: Create a warm, bespoke, luxury 1-sentence welcome message incorporating local elements, but DO NOT start it with cliches like 'respect' or 'my friend'. Keep it unique.\n"
+                    f"6. logo_url: Provide a logo or high-quality favicon image URL. If you find one in metadata or page content, use it. If not, generate a reliable Clearbit API logo link 'https://logo.clearbit.com/{domain}' or a Google favicon link 'https://www.google.com/s2/favicons?sz=128&domain={domain}' as fallback."
                 )
             ),
         )
@@ -672,6 +674,7 @@ async def extract_brand_endpoint(payload: BrandExtractPayload):
             "primary_glow": extracted_data.get("primary_glow", "rgba(212, 175, 55, 0.12)"),
             "font": extracted_data.get("font", "Inter, sans-serif"),
             "welcome_message": extracted_data.get("welcome_message", "Welcome to our paradise!"),
+            "logo_url": extracted_data.get("logo_url") or f"https://logo.clearbit.com/{domain}",
             "theme": f"theme-custom-{clean_id}"
         }
         

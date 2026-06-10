@@ -686,6 +686,10 @@ function App() {
     }
   };
 
+  const currentActiveBrand = (view === 'integrations' && integrationTab === 'manual')
+    ? (tenantBrandsMock[manualHotel] || tenantsList.find(t => t._id === manualHotel))
+    : tenantBrand;
+
   return (
     <div className="app-container">
       {/* Premium Header with Navigation */}
@@ -694,16 +698,59 @@ function App() {
           <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <h1 className="app-title" style={{ display: 'flex', alignItems: 'center', gap: '10px', textTransform: 'uppercase', fontFamily: 'var(--font-serif)', letterSpacing: '0.08em', color: 'var(--primary)' }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
-                  <path d="M12 22c1-4 1-8 0-12" />
-                  <path d="M5 22c2-.5 12-.5 14 0" />
-                  <path d="M12 10c-3-2-7-1-9 2" />
-                  <path d="M12 10c3-2 7-1 9 2" />
-                  <path d="M12 10c-4 .5-8 3-9 7" />
-                  <path d="M12 10c4 .5 8 3 9 7" />
-                  <path d="M12 10c-1.5-4-5-6-8-6" />
-                  <path d="M12 10c1.5-4 5-6 8-6" />
-                </svg>
+                {currentActiveBrand?.logo_url ? (
+                  <div style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    border: '1.5px solid var(--primary)',
+                    boxShadow: '0 0 10px var(--primary-glow)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'rgba(0,0,0,0.3)',
+                    flexShrink: 0
+                  }}>
+                    <img 
+                      src={currentActiveBrand.logo_url} 
+                      alt={currentActiveBrand.name || 'Brand Logo'} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          parent.style.border = 'none';
+                          parent.style.boxShadow = 'none';
+                          parent.style.background = 'none';
+                          parent.innerHTML = `
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary)">
+                              <path d="M12 22c1-4 1-8 0-12"></path>
+                              <path d="M5 22c2-.5 12-.5 14 0"></path>
+                              <path d="M12 10c-3-2-7-1-9 2"></path>
+                              <path d="M12 10c3-2 7-1 9 2"></path>
+                              <path d="M12 10c-4 .5-8 3-9 7"></path>
+                              <path d="M12 10c4 .5 8 3 9 7"></path>
+                              <path d="M12 10c-1.5-4-5-6-8-6"></path>
+                              <path d="M12 10c1.5-4 5-6 8-6"></path>
+                            </svg>
+                          `;
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
+                    <path d="M12 22c1-4 1-8 0-12" />
+                    <path d="M5 22c2-.5 12-.5 14 0" />
+                    <path d="M12 10c-3-2-7-1-9 2" />
+                    <path d="M12 10c3-2 7-1 9 2" />
+                    <path d="M12 10c-4 .5-8 3-9 7" />
+                    <path d="M12 10c4 .5 8 3 9 7" />
+                    <path d="M12 10c-1.5-4-5-6-8-6" />
+                    <path d="M12 10c1.5-4 5-6 8-6" />
+                  </svg>
+                )}
                 {tenantBrand?.name || guests.find(g => g._id === guestId)?.hotel_name || 'La Coralina Island House'}
               </h1>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
@@ -760,16 +807,59 @@ function App() {
           <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <h1 className="app-title" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={() => navigateToView('landing')}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
-                  <path d="M12 22c1-4 1-8 0-12" />
-                  <path d="M5 22c2-.5 12-.5 14 0" />
-                  <path d="M12 10c-3-2-7-1-9 2" />
-                  <path d="M12 10c3-2 7-1 9 2" />
-                  <path d="M12 10c-4 .5-8 3-9 7" />
-                  <path d="M12 10c4 .5 8 3 9 7" />
-                  <path d="M12 10c-1.5-4-5-6-8-6" />
-                  <path d="M12 10c1.5-4 5-6 8-6" />
-                </svg>
+                {currentActiveBrand?.logo_url ? (
+                  <div style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    border: '1.5px solid var(--primary)',
+                    boxShadow: '0 0 10px var(--primary-glow)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'rgba(0,0,0,0.3)',
+                    flexShrink: 0
+                  }}>
+                    <img 
+                      src={currentActiveBrand.logo_url} 
+                      alt={currentActiveBrand.name || 'Brand Logo'} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          parent.style.border = 'none';
+                          parent.style.boxShadow = 'none';
+                          parent.style.background = 'none';
+                          parent.innerHTML = `
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary)">
+                              <path d="M12 22c1-4 1-8 0-12"></path>
+                              <path d="M5 22c2-.5 12-.5 14 0"></path>
+                              <path d="M12 10c-3-2-7-1-9 2"></path>
+                              <path d="M12 10c3-2 7-1 9 2"></path>
+                              <path d="M12 10c-4 .5-8 3-9 7"></path>
+                              <path d="M12 10c4 .5 8 3 9 7"></path>
+                              <path d="M12 10c-1.5-4-5-6-8-6"></path>
+                              <path d="M12 10c1.5-4 5-6 8-6"></path>
+                            </svg>
+                          `;
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
+                    <path d="M12 22c1-4 1-8 0-12" />
+                    <path d="M5 22c2-.5 12-.5 14 0" />
+                    <path d="M12 10c-3-2-7-1-9 2" />
+                    <path d="M12 10c3-2 7-1 9 2" />
+                    <path d="M12 10c-4 .5-8 3-9 7" />
+                    <path d="M12 10c4 .5 8 3 9 7" />
+                    <path d="M12 10c-1.5-4-5-6-8-6" />
+                    <path d="M12 10c1.5-4 5-6 8-6" />
+                  </svg>
+                )}
                 Bocas del Toro Concierge
               </h1>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
@@ -1489,13 +1579,39 @@ function App() {
                           >
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                               <div style={{
-                                width: '16px',
-                                height: '16px',
+                                width: '28px',
+                                height: '28px',
                                 borderRadius: '50%',
-                                background: accentColor,
-                                border: '2px solid var(--bg-color)',
-                                boxShadow: `0 0 8px ${accentColor}`
-                              }} />
+                                background: 'rgba(0,0,0,0.3)',
+                                border: '1.5px solid',
+                                borderColor: isSelected ? accentColor : 'rgba(255,255,255,0.1)',
+                                boxShadow: isSelected ? `0 0 10px ${accentColor}` : 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                overflow: 'hidden',
+                                transition: 'all 0.25s'
+                              }}>
+                                {hotel.logo_url ? (
+                                  <img 
+                                    src={hotel.logo_url} 
+                                    alt={hotel.name} 
+                                    style={{ 
+                                      width: '100%', 
+                                      height: '100%', 
+                                      objectFit: 'cover' 
+                                    }} 
+                                    onError={(e) => {
+                                      e.target.style.display = 'none';
+                                      e.target.parentElement.innerHTML = `<span style="font-size: 0.8rem; font-weight: 800; color: ${accentColor}">${hotel.name.charAt(0)}</span>`;
+                                    }}
+                                  />
+                                ) : (
+                                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: accentColor }}>
+                                    {hotel.name.charAt(0)}
+                                  </span>
+                                )}
+                              </div>
                               
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 {/* Delete Button (Only for custom onboarded hotels) */}

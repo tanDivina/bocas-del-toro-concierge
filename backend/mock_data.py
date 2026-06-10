@@ -461,6 +461,7 @@ def get_tenants_data():
             "primary_glow": "rgba(15, 186, 211, 0.12)",
             "font": "Inter, system-ui, sans-serif",
             "welcome_message": "Your luxury overwater villa experience begins now. Pura vida! 🌴",
+            "logo_url": "https://www.google.com/s2/favicons?sz=128&domain=nayarabocasdeltoro.com",
             "theme": "theme-ocean"
         },
         {
@@ -470,6 +471,7 @@ def get_tenants_data():
             "primary_glow": "rgba(212, 175, 55, 0.12)",
             "font": "var(--font-serif), Georgia, serif",
             "welcome_message": "Welcome to your Balinese wellness sanctuary in the Caribbean. Pura vida! 🌸",
+            "logo_url": "https://www.google.com/s2/favicons?sz=128&domain=lacoralinaislandhouse.com",
             "theme": "theme-wellness"
         },
         {
@@ -479,6 +481,7 @@ def get_tenants_data():
             "primary_glow": "rgba(219, 39, 119, 0.12)",
             "font": "Outfit, Poppins, system-ui, sans-serif",
             "welcome_message": "Step into absolute, sustainable luxury on our private island estate. Respect! 🌺",
+            "logo_url": "https://www.google.com/s2/favicons?sz=128&domain=sweetbocas.com",
             "theme": "theme-hibiscus"
         },
         {
@@ -488,6 +491,7 @@ def get_tenants_data():
             "primary_glow": "rgba(34, 197, 94, 0.12)",
             "font": "Roboto, system-ui, sans-serif",
             "welcome_message": "Your boutique cliffside eco-villa retreat is ready, my friend. No stress! 🦜",
+            "logo_url": "https://www.google.com/s2/favicons?sz=128&domain=bocasvillas.com",
             "theme": "theme-forest"
         },
         {
@@ -497,6 +501,7 @@ def get_tenants_data():
             "primary_glow": "rgba(249, 115, 22, 0.12)",
             "font": "Poppins, Inter, system-ui, sans-serif",
             "welcome_message": "Welcome to our vibrant beachfront jungle playground. Pura vida! 🐸",
+            "logo_url": "https://www.google.com/s2/favicons?sz=128&domain=redfrogbeach.com",
             "theme": "theme-volcano"
         }
     ]
