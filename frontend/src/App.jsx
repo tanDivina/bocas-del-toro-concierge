@@ -1244,10 +1244,10 @@ function App() {
                     <path d="M12 10c1.5-4 5-6 8-6" />
                   </svg>
                 )}
-                Bocas del Toro Concierge
+                IslandFlow Experience
               </h1>
               <p style={{ color: '#ffffff', opacity: 1, fontSize: '0.85rem' }}>
-                Local Experience & Eco-Tourism Coordinator
+                Eco-Tourism Coordinator for Bocas del Toro
               </p>
             </div>
 
@@ -1494,7 +1494,7 @@ function App() {
         <div>
           {/* Hero Section */}
           <div className="landing-hero">
-            <h2 className="landing-tagline">Local Experience & Eco-Tourism Coordinator</h2>
+            <h2 className="landing-tagline">Eco-Tourism Coordinator for Bocas del Toro</h2>
             <p className="landing-intro">
               Moving beyond basic text chat. A dedicated local travel agent that actively manages schedules, monitors live weather conditions, automatically proposes indoor reschedules during storms, and commits verified transactions directly to MongoDB Atlas.
             </p>
@@ -2081,6 +2081,44 @@ function App() {
             <WeatherHorizon logistics={logistics} />
             <ScheduleView bookings={bookings} tours={tours} logistics={logistics} guestId={guestId} />
             <ItineraryDoc itineraryMarkdown={itineraryMarkdown} guestId={guestId} />
+            
+            {/* Urgent Human Front Desk Emergency Assistance Card */}
+            <div className="glass-card" style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexShrink: 0, border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexShrink: 0 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.79 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: 650, margin: 0, color: 'var(--text-primary)' }}>Need Immediate Human Assistance?</h4>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0 0 0', fontWeight: 300 }}>If you are facing travel disruptions or emergencies, call our 24/7 Front Desk directly.</p>
+                </div>
+              </div>
+              <a 
+                href="tel:+50766554433" 
+                style={{ 
+                  padding: '10px 18px', 
+                  fontSize: '0.82rem', 
+                  textDecoration: 'none', 
+                  background: '#ef4444', 
+                  color: '#ffffff', 
+                  border: 'none', 
+                  borderRadius: '10px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  fontWeight: 600,
+                  boxShadow: 'none',
+                  whiteSpace: 'nowrap',
+                  transition: 'background 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#dc2626'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#ef4444'}
+              >
+                Call Front Desk
+              </a>
+            </div>
           </div>
           <div style={{ viewTransitionName: 'chat-widget' }}>
             <ChatWidget 
@@ -4637,9 +4675,20 @@ function App() {
                 <button 
                   className="btn-secondary" 
                   onClick={() => setShowItineraryModal(false)}
-                  style={{ flex: 1, padding: '10px 16px', fontSize: '0.85rem' }}
+                  style={{ 
+                    flex: 1, 
+                    padding: '10px 16px', 
+                    fontSize: '0.83rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
                 >
-                  Close
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  Return to talk to Concierge
                 </button>
               </div>
             </div>
