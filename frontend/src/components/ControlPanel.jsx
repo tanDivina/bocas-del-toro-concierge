@@ -81,10 +81,16 @@ export default function ControlPanel({
   agentLogs, 
   loading 
 }) {
+  const [selectedWaveHeight, setSelectedWaveHeight] = useState(2.2);
+
   const sortedLogistics = logistics ? [...logistics].sort((a, b) => a.date.localeCompare(b.date)) : [];
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedWeather, setSelectedWeather] = useState('Heavy Rain');
   const [selectedAlert, setSelectedAlert] = useState('rain_warning');
+
+  const hasRainAlert = logistics && logistics.some(l => l.alert !== 'none');
+  const isConfirmed = agentLogs && agentLogs.some(log => log.includes('CONFIRMED') || log.includes('Booking updated') || log.includes('updated and slots shifted') || log.includes('Generated water taxi dispatch order'));
+  const isDeclined = agentLogs && agentLogs.some(log => log.includes('DECLINED'));
 
   React.useEffect(() => {
     if (sortedLogistics.length > 0 && (!selectedDate || !sortedLogistics.some(l => l.date === selectedDate))) {
@@ -92,12 +98,27 @@ export default function ControlPanel({
     }
   }, [logistics]);
 
+  // Sync wave heights on weather selection
+  React.useEffect(() => {
+    if (selectedWeather === 'Heavy Rain') {
+      setSelectedWaveHeight(2.2);
+      setSelectedAlert('rain_warning');
+    } else if (selectedWeather === 'Rainy') {
+      setSelectedWaveHeight(1.2);
+      setSelectedAlert('rain_warning');
+    } else {
+      setSelectedWaveHeight(0.6);
+      setSelectedAlert('none');
+    }
+  }, [selectedWeather]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onSimulate({
       date: selectedDate,
       weather: selectedWeather,
-      alert: selectedAlert
+      alert: selectedAlert,
+      wave_height: parseFloat(selectedWaveHeight)
     });
   };
 
@@ -163,24 +184,44 @@ export default function ControlPanel({
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Weather Alert Status</label>
-          <select 
-            value={selectedAlert}
-            onChange={(e) => setSelectedAlert(e.target.value)}
-            style={{
-              background: 'var(--slot-bg)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              color: 'var(--text-primary)',
-              padding: '8px',
-              fontSize: '0.9rem',
-              transition: 'background-color 0.8s ease, color 0.5s ease'
-            }}
-          >
-            <option value="none">None (Optimal Conditions)</option>
-            <option value="rain_warning">Rain Warning (Trigger Replan)</option>
-          </select>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Weather Alert Status</label>
+            <select 
+              value={selectedAlert}
+              onChange={(e) => setSelectedAlert(e.target.value)}
+              style={{
+                background: 'var(--slot-bg)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                color: 'var(--text-primary)',
+                padding: '8px',
+                fontSize: '0.9rem',
+                transition: 'background-color 0.8s ease, color 0.5s ease'
+              }}
+            >
+              <option value="none">None (Optimal Conditions)</option>
+              <option value="rain_warning">Rain Warning (Trigger Replan)</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Wave Height: {selectedWaveHeight.toFixed(1)}m</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input 
+                type="range" 
+                min="0.2" 
+                max="3.0" 
+                step="0.1" 
+                value={selectedWaveHeight}
+                onChange={(e) => setSelectedWaveHeight(parseFloat(e.target.value))}
+                style={{ flex: 1, accentColor: 'var(--primary)', height: '5px', cursor: 'pointer' }}
+              />
+            </div>
+            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: selectedWaveHeight > 1.5 ? 'var(--error)' : 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+              {selectedWaveHeight > 1.5 ? '⚠️ High Waves' : '🟢 Safe Seas'}
+            </span>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
@@ -253,6 +294,114 @@ export default function ControlPanel({
               </span>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* 🛡️ Real-World Agent Compliance & Safety Monitor */}
+      <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <h3 style={{ fontSize: '0.9rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          Real-World Compliance & Guardrails Monitor
+        </h3>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', margin: 0, fontWeight: 300 }}>
+          Live audits of safety, double-booking prevention, and Human-in-the-Loop constraints.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', background: 'rgba(0,0,0,0.15)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+          {/* Item 1: Agent Execution State */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 600, letterSpacing: '0.03em' }}>Agent Brain Status</span>
+            <span style={{ 
+              fontSize: '0.8rem', 
+              fontWeight: 600, 
+              color: loading ? 'var(--primary)' : 'var(--text-muted)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <span className={loading ? "pulse-dot" : ""} style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: loading ? 'var(--primary)' : '#9ca3af',
+                display: 'inline-block'
+              }}></span>
+              {loading ? 'Executing Replan...' : 'Monitoring Live Signals'}
+            </span>
+          </div>
+
+          {/* Item 2: Weather Disruption Audit */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 600, letterSpacing: '0.03em' }}>Weather Conflict</span>
+            <span style={{ 
+              fontSize: '0.8rem', 
+              fontWeight: 600, 
+              color: hasRainAlert ? 'var(--warning)' : 'var(--primary)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              {hasRainAlert ? '⛈️ Threat Detected' : '☀️ All Clear (Optimal)'}
+            </span>
+          </div>
+
+          {/* Item 3: HITL Consent Guard */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2', borderTop: '1px solid var(--border-color)', paddingTop: '8px', marginTop: '4px' }}>
+            <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 600, letterSpacing: '0.03em' }}>Human-in-the-Loop Consent</span>
+            <span style={{ 
+              fontSize: '0.8rem', 
+              fontWeight: 600, 
+              color: loading ? 'var(--primary)' : (isConfirmed ? 'var(--primary)' : (isDeclined ? 'var(--error)' : (hasRainAlert ? 'var(--warning)' : 'var(--text-muted)'))),
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              {loading ? (
+                '🔄 Evaluating alternative schedules...'
+              ) : isConfirmed ? (
+                '🟢 Approved & Booking Rescheduled'
+              ) : isDeclined ? (
+                '🔴 Proposal Declined by Guest'
+              ) : hasRainAlert ? (
+                '⚠️ Proposal Sent - Awaiting Consent'
+              ) : (
+                '🟢 Sync Active (No Conflict)'
+              )}
+            </span>
+          </div>
+
+          {/* Item 4: Captain & Provider Dispatch */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2', borderTop: '1px solid var(--border-color)', paddingTop: '8px', marginTop: '4px' }}>
+            <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 600, letterSpacing: '0.03em' }}>Excursion Provider Dispatch</span>
+            <span style={{ 
+              fontSize: '0.8rem', 
+              fontWeight: 600, 
+              color: isConfirmed ? 'var(--primary)' : (hasRainAlert ? 'var(--warning)' : 'var(--text-muted)'),
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              {isConfirmed ? (
+                '🟢 Boat Captain Notified via Dispatch'
+              ) : hasRainAlert ? (
+                '🟡 Dispatch Intercepted (Hold)'
+              ) : (
+                '🟢 Standby / Schedule Aligned'
+              )}
+            </span>
+          </div>
+
+          {/* Item 5: Double Booking Guard */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2', borderTop: '1px solid var(--border-color)', paddingTop: '8px', marginTop: '4px' }}>
+            <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 600, letterSpacing: '0.03em' }}>Institutional Safety Guard</span>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              🟢 Anti-Double-Booking Lock Enforced
+            </span>
+          </div>
         </div>
       </div>
 

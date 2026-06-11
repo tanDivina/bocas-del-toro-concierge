@@ -16,7 +16,7 @@ export default function ItineraryDoc({ itineraryMarkdown, guestId = "g1" }) {
         return <h1 key={index} style={{ fontFamily: 'var(--font-serif)', fontSize: '1.8rem', fontWeight: 700, margin: '20px 0 12px 0', borderBottom: '2px solid var(--primary)', paddingBottom: '6px', color: '#0f172a' }}>{line.replace('# ', '')}</h1>;
       }
       if (line.startsWith('### ')) {
-        return <h3 key={index} style={{ fontSize: '1.1rem', fontWeight: 600, margin: '16px 0 8px 0', color: 'hsl(188, 86%, 30%)' }}>{line.replace('### ', '')}</h3>;
+        return <h3 key={index} style={{ fontSize: '1.1rem', fontWeight: 600, margin: '16px 0 8px 0', color: 'var(--primary)' }}>{line.replace('### ', '')}</h3>;
       }
       if (line.startsWith('**') && line.endsWith('**')) {
         return <p key={index} style={{ fontWeight: 600, margin: '8px 0', color: '#0f172a' }}>{line.replace(/\*\*/g, '')}</p>;

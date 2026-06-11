@@ -100,6 +100,7 @@ class WeatherSimulationPayload(BaseModel):
     date: str
     weather: str  # "Sunny", "Rainy", "Heavy Rain"
     alert: str    # "none", "rain_warning"
+    wave_height: Optional[float] = None
 
 class ProposalPayload(BaseModel):
     guest_id: str = "g1"
@@ -189,7 +190,7 @@ def sync_live_weather():
 # --- Endpoints ---
 
 @app.get("/api/status")
-async def get_status(guest_id: str = "g1", token: str = None):
+async def get_status(guest_id: str = "g1", token: str = None, secure: bool = False):
     """Retrieve full database state for frontend visualization."""
     try:
         token_valid = False
@@ -230,12 +231,16 @@ async def get_status(guest_id: str = "g1", token: str = None):
         guests = list(db["guests"].find({}))
         logistics = list(db["logistics"].find({}))
         tenants = list(db["tenants"].find({}))
+        dispatches = list(db["dispatches"].find({}))
         
         # Clean mongo ObjectId to string for JSON serialization
-        for collection in [tours, bookings, guests, logistics, tenants]:
+        for collection in [tours, bookings, guests, logistics, tenants, dispatches]:
             for doc in collection:
                 if "_id" in doc:
                     doc["_id"] = str(doc["_id"])
+                    
+        if token_valid or secure:
+            guests = [g for g in guests if g["_id"] == guest_id]
                     
         # Check if local itinerary exists for this guest
         itinerary_md = ""
@@ -268,6 +273,7 @@ async def get_status(guest_id: str = "g1", token: str = None):
             "guests": guests,
             "logistics": logistics,
             "tenants": tenants,
+            "dispatches": dispatches,
             "itinerary_markdown": itinerary_md,
             "tenant_brand": tenant_brand,
             "secure_token_active": token_valid
@@ -310,14 +316,26 @@ async def simulate_weather(payload: WeatherSimulationPayload):
     guest_id = payload.guest_id
     try:
         # 1. Update weather logistics in database
+        wave_h = payload.wave_height
+        if wave_h is None:
+            if payload.weather == "Heavy Rain":
+                wave_h = 2.2
+            elif payload.weather == "Rainy":
+                wave_h = 1.2
+            else:
+                wave_h = 0.6
+        wave_status = "dangerous" if wave_h > 1.5 else "safe"
+        
         db["logistics"].update_one(
             {"date": payload.date},
             {"$set": {
                 "weather": payload.weather,
-                "alert": payload.alert
+                "alert": payload.alert,
+                "wave_height": wave_h,
+                "wave_status": wave_status
             }}
         )
-        logger.info(f"Simulated weather updated for {payload.date}: {payload.weather} ({payload.alert})")
+        logger.info(f"Simulated weather updated for {payload.date}: {payload.weather} (Alert: {payload.alert}, Waves: {wave_h}m)")
 
         # 2. Trigger the agent's planning process
         # Instruct the agent to inspect the weather warning and coordinate reschedules if bookings exist
@@ -406,6 +424,7 @@ async def reset_simulation():
         db["bookings"].delete_many({})
         db["logistics"].delete_many({})
         db["tenants"].delete_many({})
+        db["dispatches"].delete_many({})
         
         # Remove all guest itinerary files
         for file in os.listdir("."):
@@ -531,7 +550,7 @@ class TenantBrandExtraction(BaseModel):
     primary_glow: str = Field(description="A matching transparent glow in rgba format 'rgba(R, G, B, 0.12)' that perfectly corresponds to the HSL color.")
     font: str = Field(description="A premium Google Font family name stack matching the resort's vibe (e.g. 'Playfair Display, Georgia, serif' or 'Outfit, Poppins, system-ui, sans-serif').")
     welcome_message: str = Field(description="A highly bespoke, premium luxury welcome message for the resort's guest dashboard. It must sound warm, elite, and hospitable (e.g., 'Welcome to your Balinese wellness sanctuary in the Caribbean. Pura vida! 🌸'). Do NOT start with repetitious cliché greetings like 'respect, my friend', make it unique.")
-    logo_url: Optional[str] = Field(None, description="The brand's logo image URL. Find it in meta properties (e.g. 'og:image') or image source links if found in HTML. If not found or if the scrape failed, generate a high-quality fallback using Clearbit API 'https://logo.clearbit.com/{domain}' or Google Favicon API 'https://www.google.com/s2/favicons?sz=128&domain={domain}'. Ensure it is a valid, secure image URL.")
+    logo_url: Optional[str] = Field(None, description="The brand's actual logo or real favicon image URL if found in HTML meta properties (e.g. 'og:logo', 'shortcut icon') or actual image elements on the page. If no authentic, real brand logo is found in the website content, return null or an empty string. DO NOT use generic fallbacks or invented logos like Clearbit or Google favicon API generators.")
 
 class BrandExtractPayload(BaseModel):
     url: str
@@ -659,7 +678,7 @@ async def extract_brand_endpoint(payload: BrandExtractPayload):
                     "3. primary_glow: Generate a matching semi-transparent RGBA glow with 0.12 opacity, e.g. 'rgba(34, 150, 240, 0.12)'.\n"
                     "4. font: Select a premium Google Font family name stack (e.g. 'Outfit, Poppins, sans-serif' or 'Playfair Display, Georgia, serif' or 'Montserrat, Inter, sans-serif').\n"
                     "5. welcome_message: Create a warm, bespoke, luxury 1-sentence welcome message incorporating local elements, but DO NOT start it with cliches like 'respect' or 'my friend'. Keep it unique.\n"
-                    f"6. logo_url: Provide a logo or high-quality favicon image URL. If you find one in metadata or page content, use it. If not, generate a reliable Clearbit API logo link 'https://logo.clearbit.com/{domain}' or a Google favicon link 'https://www.google.com/s2/favicons?sz=128&domain={domain}' as fallback."
+                    f"6. logo_url: Locate and provide the brand's actual logo or real favicon image URL if found in metadata, icons, or page content. If no authentic brand logo or high-quality favicon is found on the website, return null or an empty string. Absolutely do NOT construct invented or fallback/generic logos using Clearbit, Google favicon, or other third-party domain logo APIs."
                 )
             ),
         )
@@ -674,7 +693,7 @@ async def extract_brand_endpoint(payload: BrandExtractPayload):
             "primary_glow": extracted_data.get("primary_glow", "rgba(212, 175, 55, 0.12)"),
             "font": extracted_data.get("font", "Inter, sans-serif"),
             "welcome_message": extracted_data.get("welcome_message", "Welcome to our paradise!"),
-            "logo_url": extracted_data.get("logo_url") or f"https://logo.clearbit.com/{domain}",
+            "logo_url": extracted_data.get("logo_url") or None,
             "theme": f"theme-custom-{clean_id}"
         }
         

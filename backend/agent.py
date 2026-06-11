@@ -7,7 +7,12 @@ from google.genai import types
 from dotenv import load_dotenv
 
 # Import tools from our mcp_server
-from mcp_server import get_tours, get_bookings, check_weather, reschedule_booking, generate_itinerary, clear_execution_logs, execution_logs
+from mcp_server import (
+    get_tours, get_bookings, check_weather, add_booking, 
+    reschedule_booking, generate_itinerary, clear_execution_logs, 
+    execution_logs, cancel_booking, update_guest_profile, 
+    get_current_coastal_advisory
+)
 
 load_dotenv()
 
@@ -20,14 +25,16 @@ You treat guests like family. Use local warmth in your tone (occasional light is
 Your primary responsibilities are:
 1. Help guests view and manage their tour schedules. Use the `current_date` provided in the Guest Context prefix block as "today's" date to resolve relative terms like "today", "tomorrow", "yesterday", or "day after tomorrow". Do NOT ask the guest what today's date is!
 2. Ground your answers ONLY in verified data retrieved from the tools (like tours, bookings, and weather).
-3. If weather alerts are triggered (e.g. heavy rain on a day they have an outdoor tour):
-   - You MUST run a planning check using your tools:
-     a. Find their bookings for that day.
+3. Handle the full booking lifecycle:
+   - **Booking New Activities:** You are fully empowered and authorized to book new activities for guests from scratch. If a guest asks to book a new activity or says "yes" to scheduling a recommended tour, you MUST immediately call the `add_booking` tool with the appropriate `guest_id`, `tour_id`, `date`, and `slot` parameters, and then compile their updated schedule using the `generate_itinerary` tool. Never tell the guest that you lack a booking tool or cannot book new reservations!
+   - **Rescheduling Activities:** If weather alerts are triggered (e.g. heavy rain or wave warning on a day they have an outdoor tour):
+     a. Find their bookings for that day using `get_bookings`.
      b. Identify if any are outdoor tours.
-     c. Search for indoor alternative tours that match their stay period and slot (morning/afternoon).
+     c. Search for indoor alternative tours that match their stay period and slot (morning/afternoon) using `get_tours`.
      d. Formulate a reschedule proposal. If changing the tour, explain the details and why it is a great option.
      e. Ask the guest for their approval (human-in-the-loop). DO NOT execute the database update until they agree!
-     f. Once they agree (represented by their chat response or an API button click), run the reschedule tool, confirm the slots, and generate their updated itinerary document.
+     f. Once they agree (represented by their chat response or an API button click), run the `reschedule_booking` tool, confirm the slots, and generate their updated itinerary document using `generate_itinerary`.
+   - **Cancelling Activities:** If a guest wants to cancel a scheduled tour, you MUST call the `cancel_booking` tool with the appropriate `booking_id` to release the slot and notify the captain.
 
 Always check the guest's bookings first using get_bookings, check weather forecasts using check_weather, and browse available activities using get_tours.
 Be proactive. If you see a logistics conflict (like rain for a snorkeling trip), bring it up and offer the solution.
@@ -66,7 +73,11 @@ def get_runner():
             name="BocasEcoConciergeAgent",
             model="gemini-3.1-flash-lite",
             instruction=SYSTEM_PROMPT,
-            tools=[get_tours, get_bookings, check_weather, reschedule_booking, generate_itinerary]
+            tools=[
+                get_tours, get_bookings, check_weather, add_booking, 
+                reschedule_booking, generate_itinerary, cancel_booking, 
+                update_guest_profile, get_current_coastal_advisory
+            ]
         )
         
         runner = Runner(

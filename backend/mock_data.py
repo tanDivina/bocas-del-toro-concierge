@@ -446,10 +446,10 @@ def get_bookings_data(dates):
 
 def get_logistics_data(dates):
     return [
-        {"_id": "l_30", "date": dates["d0"], "weather": "Sunny", "alert": "none"},
-        {"_id": "l_31", "date": dates["d1"], "weather": "Sunny", "alert": "none"},
-        {"_id": "l_01", "date": dates["d2"], "weather": "Sunny", "alert": "none"},
-        {"_id": "l_02", "date": dates["d3"], "weather": "Sunny", "alert": "none"}
+        {"_id": "l_30", "date": dates["d0"], "weather": "Sunny", "alert": "none", "wave_height": 0.6, "wave_status": "safe"},
+        {"_id": "l_31", "date": dates["d1"], "weather": "Sunny", "alert": "none", "wave_height": 0.6, "wave_status": "safe"},
+        {"_id": "l_01", "date": dates["d2"], "weather": "Sunny", "alert": "none", "wave_height": 0.6, "wave_status": "safe"},
+        {"_id": "l_02", "date": dates["d3"], "weather": "Sunny", "alert": "none", "wave_height": 0.6, "wave_status": "safe"}
     ]
 
 def get_tenants_data():
@@ -461,7 +461,7 @@ def get_tenants_data():
             "primary_glow": "rgba(15, 186, 211, 0.12)",
             "font": "Inter, system-ui, sans-serif",
             "welcome_message": "Your luxury overwater villa experience begins now. Pura vida! 🌴",
-            "logo_url": "https://www.google.com/s2/favicons?sz=128&domain=nayarabocasdeltoro.com",
+            "logo_url": None,
             "theme": "theme-ocean"
         },
         {
@@ -471,7 +471,7 @@ def get_tenants_data():
             "primary_glow": "rgba(212, 175, 55, 0.12)",
             "font": "var(--font-serif), Georgia, serif",
             "welcome_message": "Welcome to your Balinese wellness sanctuary in the Caribbean. Pura vida! 🌸",
-            "logo_url": "https://www.google.com/s2/favicons?sz=128&domain=lacoralinaislandhouse.com",
+            "logo_url": None,
             "theme": "theme-wellness"
         },
         {
@@ -481,7 +481,7 @@ def get_tenants_data():
             "primary_glow": "rgba(219, 39, 119, 0.12)",
             "font": "Outfit, Poppins, system-ui, sans-serif",
             "welcome_message": "Step into absolute, sustainable luxury on our private island estate. Respect! 🌺",
-            "logo_url": "https://www.google.com/s2/favicons?sz=128&domain=sweetbocas.com",
+            "logo_url": None,
             "theme": "theme-hibiscus"
         },
         {
@@ -491,7 +491,7 @@ def get_tenants_data():
             "primary_glow": "rgba(34, 197, 94, 0.12)",
             "font": "Roboto, system-ui, sans-serif",
             "welcome_message": "Your boutique cliffside eco-villa retreat is ready, my friend. No stress! 🦜",
-            "logo_url": "https://www.google.com/s2/favicons?sz=128&domain=bocasvillas.com",
+            "logo_url": None,
             "theme": "theme-forest"
         },
         {
@@ -501,7 +501,7 @@ def get_tenants_data():
             "primary_glow": "rgba(249, 115, 22, 0.12)",
             "font": "Poppins, Inter, system-ui, sans-serif",
             "welcome_message": "Welcome to our vibrant beachfront jungle playground. Pura vida! 🐸",
-            "logo_url": "https://www.google.com/s2/favicons?sz=128&domain=redfrogbeach.com",
+            "logo_url": None,
             "theme": "theme-volcano"
         }
     ]
@@ -537,7 +537,7 @@ def seed_db():
         # Seed Tenants (Branding)
         tenants_coll = current_db["tenants"]
         for tenant in get_tenants_data():
-            tenants_coll.insert_one(tenant)
+            tenants_coll.replace_one({"_id": tenant["_id"]}, tenant, upsert=True)
             
         logger.info("Successfully seeded database collections.")
     else:
@@ -547,6 +547,12 @@ def seed_db():
             if tours_coll.count_documents({"_id": tour["_id"]}) == 0:
                 tours_coll.insert_one(tour)
                 logger.info(f"Inserted missing tour: {tour['name']} ({tour['_id']})")
+                
+    # Always ensure default tenants are up-to-date with latest color, font, logo_url
+    tenants_coll = current_db["tenants"]
+    for tenant in get_tenants_data():
+        tenants_coll.replace_one({"_id": tenant["_id"]}, tenant, upsert=True)
+    logger.info("Synchronized and verified all default tenant brand settings in database.")
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

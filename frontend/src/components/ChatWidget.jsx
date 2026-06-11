@@ -327,9 +327,9 @@ export default function ChatWidget({
                             flex: 1, 
                             padding: '12px 16px', 
                             fontSize: '0.8rem',
-                            background: 'linear-gradient(135deg, var(--warning), hsl(25, 95%, 45%))',
-                            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.25)',
-                            color: 'white',
+                            background: 'var(--primary)',
+                            boxShadow: '0 4px 12px var(--primary-glow)',
+                            color: 'var(--primary-btn-text, #0f172a)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -398,7 +398,7 @@ export default function ChatWidget({
           type="text" 
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={loading ? "Butler is arranging..." : "Request island adjustments..."}
+          placeholder={loading ? "Butler is arranging..." : "Request activity adjustments..."}
           style={{
             flex: 1,
             background: 'var(--slot-bg)',

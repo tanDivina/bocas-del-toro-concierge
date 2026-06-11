@@ -86,7 +86,7 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
           Stay Activity Timeline
         </h2>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 300 }}>
-          Your verified stay timeline synchronized in real-time with MongoDB.
+          Your verified stay timeline is fully prepared and up to date.
         </p>
       </div>
 
@@ -99,17 +99,15 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
           return (
             <div 
               key={date} 
-              className={supportsScrollTimeline ? 'scroll-reveal-item' : 'scroll-reveal-fallback'}
+              className={`${supportsScrollTimeline ? 'scroll-reveal-item' : 'scroll-reveal-fallback'} timeline-day-card ${hasRainAlert ? (isHeavyRain ? 'weather-heavy-rain' : 'weather-warning') : ''}`}
               style={{ 
                 background: 'var(--slot-bg)', 
                 borderRadius: '12px', 
-                border: hasRainAlert ? '1px solid var(--warning)' : '1px solid var(--border-color)',
                 padding: '16px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '12px',
-                position: 'relative',
-                transition: 'background-color 0.8s ease, border-color 0.8s ease'
+                position: 'relative'
               }}
             >
               {/* Day Header */}
@@ -198,9 +196,8 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
                     </div>
                     {slotData ? (
                       <div 
+                        className={`timeline-slot-card ${slotData.tour?.type === 'indoor' ? 'slot-indoor' : 'slot-outdoor'}`}
                         style={{ 
-                          background: slotData.tour?.type === 'indoor' ? 'hsla(38, 45%, 60%, 0.06)' : 'hsla(188, 55%, 38%, 0.05)',
-                          border: `1px dashed ${slotData.tour?.type === 'indoor' ? 'var(--primary)' : 'var(--accent)'}`,
                           borderRadius: '12px',
                           padding: '12px',
                           display: 'flex',
@@ -236,7 +233,7 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
                             fontSize: '0.65rem', 
                             padding: '4px 8px', 
                             borderRadius: '8px',
-                            background: slotData.status === 'confirmed' ? 'hsla(188, 55%, 38%, 0.12)' : 'hsla(35, 80%, 55%, 0.12)',
+                            background: slotData.status === 'confirmed' ? 'var(--accent-glow)' : 'var(--warning-glow)',
                             color: slotData.status === 'confirmed' ? 'var(--accent)' : 'var(--warning)',
                             border: `1px solid ${slotData.status === 'confirmed' ? 'var(--accent)' : 'var(--warning)'}`,
                             fontWeight: 600,
@@ -248,16 +245,15 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
                       </div>
                     ) : (
                       <div 
+                        className="timeline-unscheduled-slot"
                         style={{ 
                           background: 'var(--slot-empty-bg)', 
-                          border: '1px dashed var(--border-color)', 
                           borderRadius: '12px',
                           padding: '12px 8px',
                           fontSize: '0.75rem',
                           color: 'var(--text-dim)',
                           fontStyle: 'italic',
                           textAlign: 'center',
-                          transition: 'background-color 0.8s ease, border-color 0.8s ease',
                           fontWeight: 300
                         }}
                       >

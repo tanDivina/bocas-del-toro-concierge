@@ -127,6 +127,43 @@ class MockCollection:
             modified_count = 1 if updated else 0
         return UpdateResult()
 
+    def replace_one(self, query, replacement, upsert=False):
+        db_data = self._read_data()
+        items = db_data.get(self.collection_name, [])
+        replaced = False
+        
+        for idx, item in enumerate(items):
+            match = True
+            for k, v in query.items():
+                if item.get(k) != v:
+                    match = False
+                    break
+            if match:
+                if '_id' not in replacement and '_id' in item:
+                    replacement['_id'] = item['_id']
+                items[idx] = replacement
+                replaced = True
+                break
+                
+        if not replaced and upsert:
+            if '_id' not in replacement:
+                if '_id' in query:
+                    replacement['_id'] = query['_id']
+                else:
+                    replacement['_id'] = str(len(items) + 1)
+            items.append(replacement)
+            replaced = True
+            
+        if replaced:
+            db_data[self.collection_name] = items
+            self._write_data(db_data)
+            
+        class ReplaceResult:
+            matched_count = 1 if replaced else 0
+            modified_count = 1 if replaced else 0
+            upserted_id = replacement.get('_id') if (not replaced and upsert) else None
+        return ReplaceResult()
+
     def delete_one(self, query):
         db_data = self._read_data()
         items = db_data.get(self.collection_name, [])

@@ -244,9 +244,12 @@ body {
   font-size: 2.2rem;
   font-weight: 500;
   letter-spacing: -0.2px;
-  background: linear-gradient(135deg, var(--text-primary) 20%, var(--primary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #ffffff !important;
+  background: transparent !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
 }
 
 .main-grid {
@@ -319,9 +322,12 @@ body {
   font-size: 3.4rem;
   line-height: 1.15;
   font-weight: 500;
-  background: linear-gradient(135deg, var(--text-primary) 30%, var(--primary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #ffffff !important;
+  background: transparent !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
 }
 
 .landing-intro {
@@ -700,3 +706,62 @@ body {
     transform: translateY(0);
   }
 }
+
+/* Premium Stay Activity Timeline Card Specificity Styles */
+.timeline-day-card {
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent) !important;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+.timeline-day-card.weather-warning {
+  border: 1px solid var(--warning) !important;
+}
+
+.timeline-day-card.weather-heavy-rain {
+  border: 1px solid var(--error) !important;
+}
+
+.timeline-day-card:hover {
+  border-color: var(--primary) !important;
+  box-shadow: 0 4px 15px var(--primary-glow), var(--shadow-sm) !important;
+  transform: translateY(-2px);
+}
+
+.timeline-day-card.weather-warning:hover {
+  border-color: var(--warning) !important;
+  box-shadow: 0 4px 15px var(--warning-glow), var(--shadow-sm) !important;
+}
+
+.timeline-day-card.weather-heavy-rain:hover {
+  border-color: var(--error) !important;
+  box-shadow: 0 4px 15px var(--error-glow), var(--shadow-sm) !important;
+}
+
+.timeline-slot-card {
+  border: 1px dashed color-mix(in srgb, var(--primary) 40%, transparent) !important;
+  background: var(--primary-glow) !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+.timeline-slot-card.slot-indoor {
+  border: 1px solid var(--primary) !important;
+  background: var(--primary-glow) !important;
+}
+
+.timeline-slot-card:hover {
+  transform: scale(1.02) translateY(-1px);
+  filter: brightness(1.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), 0 0 10px var(--primary-glow) !important;
+}
+
+.timeline-unscheduled-slot {
+  border: 1px dashed color-mix(in srgb, var(--primary) 20%, transparent) !important;
+  transition: all 0.3s ease !important;
+}
+
+.timeline-unscheduled-slot:hover {
+  border-color: var(--primary) !important;
+  background: var(--primary-glow) !important;
+  color: var(--primary) !important;
+}
+
