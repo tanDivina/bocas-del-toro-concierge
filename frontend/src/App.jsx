@@ -486,7 +486,16 @@ function App() {
         }
         
         const newMarkdown = data.itinerary_markdown || '';
-        setItineraryMarkdown(newMarkdown);
+        setItineraryMarkdown(prev => {
+          // Trigger the updated itinerary popup modal ONLY if the guest ID remains the same
+          // (This avoids triggering the modal merely when switching active guest profiles)
+          if (lastGuestIdRef.current === data.guest_id) {
+            if (prev && newMarkdown && prev !== newMarkdown) {
+              setShowItineraryModal(true);
+            }
+          }
+          return newMarkdown;
+        });
         
         // Update our guest tracker ref with the newly loaded guest ID
         if (data.guest_id) {
@@ -2071,7 +2080,7 @@ function App() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0, viewTransitionName: 'schedule-view' }}>
             <WeatherHorizon logistics={logistics} />
             <ScheduleView bookings={bookings} tours={tours} logistics={logistics} guestId={guestId} />
-            <ItineraryDoc itineraryMarkdown={itineraryMarkdown} guestId={guestId} setShowItineraryModal={setShowItineraryModal} />
+            <ItineraryDoc itineraryMarkdown={itineraryMarkdown} guestId={guestId} />
           </div>
           <div style={{ viewTransitionName: 'chat-widget' }}>
             <ChatWidget 
@@ -2083,7 +2092,6 @@ function App() {
               tenantBrand={tenantBrand}
               tours={tours}
               logistics={logistics}
-              setShowItineraryModal={setShowItineraryModal}
             />
           </div>
         </div>

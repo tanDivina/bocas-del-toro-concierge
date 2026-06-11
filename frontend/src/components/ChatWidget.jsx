@@ -8,8 +8,7 @@ export default function ChatWidget({
   bookings,
   tenantBrand,
   tours = [],
-  logistics = [],
-  setShowItineraryModal
+  logistics = []
 }) {
   const [input, setInput] = useState('');
   const [selectedAlternativeId, setSelectedAlternativeId] = useState('');
@@ -54,7 +53,24 @@ export default function ChatWidget({
   const isProposalMessage = (msgText) => {
     if (!msgText) return false;
     const lower = msgText.toLowerCase();
-    return lower.includes('reschedule') || lower.includes('swap') || lower.includes('alternative');
+    // Exclude cases where the swap/reschedule action has already been successfully executed or confirmed
+    const isConfirmation = 
+      lower.includes('success') || 
+      lower.includes('completed') || 
+      lower.includes('applied') || 
+      lower.includes('confirmed') || 
+      lower.includes('has been swapped') || 
+      lower.includes('has been rescheduled') ||
+      lower.includes('keep original') ||
+      lower.includes('kept original') ||
+      lower.includes('keeping original') ||
+      lower.includes('already swapped') ||
+      lower.includes('already rescheduled');
+
+    if (isConfirmation) {
+      return false;
+    }
+    return lower.includes('reschedule') || lower.includes('swap') || lower.includes('alternative') || lower.includes('propose');
   };
 
   const parseMessageText = (text) => {
@@ -105,48 +121,6 @@ export default function ChatWidget({
             Local Butler Dispatch Active
           </div>
         </div>
-        {setShowItineraryModal && (
-          <button
-            type="button"
-            onClick={() => setShowItineraryModal(true)}
-            className="btn-primary"
-            style={{
-              marginLeft: 'auto',
-              padding: '8px 14px',
-              fontSize: '0.78rem',
-              borderRadius: '8px',
-              background: 'var(--primary)',
-              color: 'var(--primary-btn-text, #0f172a)',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600,
-              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-              boxShadow: 'none',
-              letterSpacing: '0.01em'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.filter = 'brightness(1.08)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.filter = 'none';
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', flexShrink: 0 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="7" height="7" />
-                <rect x="14" y="3" width="7" height="7" />
-                <rect x="14" y="14" width="7" height="7" />
-                <rect x="3" y="14" width="7" height="7" />
-              </svg>
-            </div>
-            Done Planning? Get QR Code
-          </button>
-        )}
       </div>
 
       {/* Messages area with scroll isolation & anchoring */}

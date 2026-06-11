@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ItineraryDoc({ itineraryMarkdown, guestId = "g1", setShowItineraryModal }) {
+export default function ItineraryDoc({ itineraryMarkdown, guestId = "g1" }) {
   const renderMarkdown = (md) => {
     if (!md) {
       return (
@@ -101,31 +101,6 @@ export default function ItineraryDoc({ itineraryMarkdown, guestId = "g1", setSho
               </div>
               Print Itinerary
             </button>
-            {setShowItineraryModal && (
-              <button 
-                className="btn-primary" 
-                onClick={() => setShowItineraryModal(true)} 
-                style={{ 
-                  padding: '8px 12px', 
-                  fontSize: '0.8rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  background: 'var(--primary)',
-                  color: 'var(--primary-btn-text, #0f172a)'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="7" height="7" />
-                    <rect x="14" y="3" width="7" height="7" />
-                    <rect x="14" y="14" width="7" height="7" />
-                    <rect x="3" y="14" width="7" height="7" />
-                  </svg>
-                </div>
-                Get Phone QR Code
-              </button>
-            )}
           </div>
         )}
       </div>
