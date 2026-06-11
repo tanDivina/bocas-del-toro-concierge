@@ -101,7 +101,7 @@ export default function WeatherHorizon({ logistics }) {
   };
 
   return (
-    <div className="glass-card" style={{ padding: '20px', position: 'relative', overflow: 'hidden' }}>
+    <div className="glass-card" style={{ padding: '20px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div>
           <h2 style={{ fontSize: '1.15rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-serif)', letterSpacing: '0.01em', margin: 0 }}>
