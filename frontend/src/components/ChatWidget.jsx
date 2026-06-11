@@ -124,7 +124,7 @@ export default function ChatWidget({
         {messages.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '16px', color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>
             {/* Elegant Welcome Palm Tree SVG */}
-            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.85 }}>
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.85, filter: 'drop-shadow(0 0 10px var(--primary))' }}>
               <path d="M12 22c1-4 1-8 0-12" />
               <path d="M5 22c2-.5 12-.5 14 0" />
               <path d="M12 10c-3-2-7-1-9 2" />

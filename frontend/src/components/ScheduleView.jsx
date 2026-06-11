@@ -72,7 +72,7 @@ export default function ScheduleView({ bookings, tours, logistics, guestId }) {
         <h2 style={{ fontSize: '1.25rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-serif)', letterSpacing: '0.01em' }}>
           {/* Custom SVG Palm Island Logo */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 6px var(--primary))' }}>
               <path d="M12 22c1-4 1-8 0-12" />
               <path d="M5 22c2-.5 12-.5 14 0" />
               <path d="M12 10c-3-2-7-1-9 2" />
