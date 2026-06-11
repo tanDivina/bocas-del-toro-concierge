@@ -761,6 +761,7 @@ function App() {
           role: 'model', 
           text: "Respect, my friend! I have processed the change in MongoDB, updated your booking slots, and generated your new official travel receipt below. Pura vida! 🌴" 
         }]);
+        setShowItineraryModal(true);
       } else {
         addLog(`ℹ️ Proposal declined. Booking status preserved.`);
         setMessages((prev) => [...prev, { 
