@@ -463,7 +463,14 @@ function App() {
         
         if (data.guest_id) {
           if (data.guest_id !== guestId) {
-            setMessages([]); // Clear chat history to represent a fresh session for the new guest
+            setMessages(data.chat_history || []);
+          } else if (data.chat_history) {
+            setMessages(prev => {
+              if (data.chat_history.length > prev.length) {
+                return data.chat_history;
+              }
+              return prev;
+            });
           }
           setGuestId(data.guest_id);
         }

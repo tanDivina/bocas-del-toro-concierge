@@ -7,6 +7,7 @@ import hashlib
 import base64
 import json
 import time
+import asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -80,11 +81,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Background task for weather syncing
+async def periodic_weather_sync():
+    """Background task to periodically sync live weather with OpenWeatherMap every 10 minutes."""
+    while True:
+        try:
+            logger.info("Automated Background Weather Sync: Starting sync...")
+            sync_live_weather()
+            logger.info("Automated Background Weather Sync: Completed.")
+        except Exception as e:
+            logger.error(f"Automated Background Weather Sync: Error during sync: {e}")
+        await asyncio.sleep(600)  # Sleep for 10 minutes
+
 # Seed database on startup
 @app.on_event("startup")
 async def startup_event():
     logger.info("Initializing database...")
     seed_db()
+    # Start automated background weather sync task
+    asyncio.create_task(periodic_weather_sync())
 
 # --- Pydantic Schemas ---
 class TokenGeneratePayload(BaseModel):
@@ -100,6 +115,12 @@ class WeatherSimulationPayload(BaseModel):
     date: str
     weather: str  # "Sunny", "Rainy", "Heavy Rain"
     alert: str    # "none", "rain_warning"
+    wave_height: Optional[float] = None
+
+class WeatherUpdatePayload(BaseModel):
+    date: str
+    weather: str  # "Sunny", "Rainy", "Heavy Rain", etc.
+    alert: str    # "none", "rain_warning", etc.
     wave_height: Optional[float] = None
 
 class ProposalPayload(BaseModel):
@@ -120,6 +141,85 @@ class PMSSyncPayload(BaseModel):
     bookings: list = []  # list of dicts with {"tour_id": "...", "date": "...", "slot": "...", "price": 0.0}
     hotel_id: Optional[str] = None
     hotel_name: Optional[str] = None
+
+# --- Automated Weather Rescheduling ---
+def trigger_automated_weather_reschedules(date: str, weather: str, alert: str):
+    """
+    Automated background rescheduling workflow.
+    When a date's weather changes to rainy/heavy rain, this function finds all active outdoor bookings on that date,
+    and runs the concierge agent's proactive rescheduling loop for each affected guest.
+    """
+    if weather not in ["Rainy", "Heavy Rain"] and alert != "rain_warning":
+        return
+
+    logger.info(f"Checking automated weather reschedules for {date} due to {weather} ({alert})")
+    
+    # 1. Find all confirmed bookings on this date
+    bookings = list(db["bookings"].find({"date": date, "status": "confirmed"}))
+    processed_guests_in_run = set()
+    
+    for b in bookings:
+        # Retrieve the tour to check if it is outdoor
+        tour = db["tours"].find_one({"_id": b["tour_id"]})
+        if tour and tour.get("type") == "outdoor":
+            guest_id = b["guest_id"]
+            if guest_id in processed_guests_in_run:
+                continue
+                
+            # Check if this weather alert has already been processed for this guest
+            guest = db["guests"].find_one({"_id": guest_id})
+            if not guest:
+                continue
+                
+            processed_alerts = guest.get("processed_weather_alerts", [])
+            if date in processed_alerts:
+                logger.info(f"Weather alert for {date} already processed for guest {guest_id}. Skipping.")
+                continue
+                
+            processed_guests_in_run.add(guest_id)
+            
+            alert_prompt = (
+                f"[SYSTEM EVENT: Weather alert updated for {date} to {weather}. "
+                f"Please run a scheduling check using your tools. "
+                f"MANDATE: You are in PROPOSAL MODE. Under no circumstances are you allowed to call the `reschedule_booking` tool. "
+                f"If this weather affects the guest's outdoor bookings on that day, you must ONLY identify indoor alternatives "
+                f"from the tours database and list them in the chat as a reschedule proposal. The user will select and confirm their choice "
+                f"using the interactive dropdown on the proposal card in the frontend UI. Do NOT execute any database updates or "
+                f"rescheduling yourself in this turn! Explain the weather reason and details of the proposal clearly, and ask for their preference.]"
+            )
+            
+            logger.info(f"Automatically triggering concierge agent rescheduling proposal loop for guest {guest_id} on {date}")
+            try:
+                # Load saved history to feed to the agent
+                saved_history = guest.get("chat_history", [])
+                formatted_history = []
+                for h in saved_history:
+                    role = "user" if h.get("role") == "user" else "model"
+                    text = h.get("text") or h.get("message")
+                    if text:
+                        formatted_history.append({"role": role, "text": text})
+                        
+                response_text, logs = run_concierge_agent(
+                    guest_id=guest_id,
+                    user_message=alert_prompt,
+                    history=formatted_history
+                )
+                
+                # Append model message to guest's chat log
+                new_msg = {"role": "model", "text": response_text, "timestamp": datetime.datetime.now().isoformat()}
+                
+                db["guests"].update_one(
+                    {"_id": guest_id},
+                    {
+                        "$push": {
+                            "chat_history": new_msg,
+                            "processed_weather_alerts": date
+                        }
+                    }
+                )
+                logger.info(f"Successfully processed weather alert reschedule proposal for guest {guest_id}")
+            except Exception as e:
+                logger.error(f"Failed to run automated rescheduling for guest {guest_id}: {e}")
 
 # --- Weather Sync Helper ---
 def sync_live_weather():
@@ -183,6 +283,8 @@ def sync_live_weather():
                             "alert": alert_status
                         }}
                     )
+                    # Automatically trigger reschedule proposal loop for affected guests
+                    trigger_automated_weather_reschedules(date, weather_status, alert_status)
             logger.info("Successfully synced real-world weather forecast with MongoDB logistics.")
     except Exception as e:
         logger.error(f"Failed to sync real-world weather: {e}")
@@ -258,12 +360,19 @@ async def get_status(guest_id: str = "g1", token: str = None, secure: bool = Fal
         # Fetch tenant brand configuration if guest exists
         current_guest = db["guests"].find_one({"_id": guest_id})
         tenant_brand = None
+        chat_history = []
         if current_guest:
             hotel_id = current_guest.get("hotel_id")
             if hotel_id:
                 tenant_brand = db["tenants"].find_one({"_id": hotel_id})
                 if tenant_brand and "_id" in tenant_brand:
                     tenant_brand["_id"] = str(tenant_brand["_id"])
+            chat_history = current_guest.get("chat_history", [])
+
+        # Clean ObjectId from chat_history if any
+        for msg in chat_history:
+            if "_id" in msg:
+                msg["_id"] = str(msg["_id"])
  
         return {
             "is_real_mongodb": is_real_mongo,
@@ -276,7 +385,8 @@ async def get_status(guest_id: str = "g1", token: str = None, secure: bool = Fal
             "dispatches": dispatches,
             "itinerary_markdown": itinerary_md,
             "tenant_brand": tenant_brand,
-            "secure_token_active": token_valid
+            "secure_token_active": token_valid,
+            "chat_history": chat_history
         }
     except HTTPException as he:
         raise he
@@ -302,6 +412,15 @@ async def chat_with_concierge(payload: ChatPayload):
             user_message=payload.message,
             history=formatted_history
         )
+
+        # Update MongoDB chat history
+        user_msg = {"role": "user", "text": payload.message, "timestamp": datetime.datetime.now().isoformat()}
+        model_msg = {"role": "model", "text": response_text, "timestamp": datetime.datetime.now().isoformat()}
+        db["guests"].update_one(
+            {"_id": guest_id},
+            {"$push": {"chat_history": {"$each": [user_msg, model_msg]}}}
+        )
+
         return {
             "response": response_text,
             "logs": logs
@@ -337,31 +456,89 @@ async def simulate_weather(payload: WeatherSimulationPayload):
         )
         logger.info(f"Simulated weather updated for {payload.date}: {payload.weather} (Alert: {payload.alert}, Waves: {wave_h}m)")
 
-        # 2. Trigger the agent's planning process
-        # Instruct the agent to inspect the weather warning and coordinate reschedules if bookings exist
-        alert_prompt = (
-            f"[SYSTEM EVENT: Weather alert updated for {payload.date} to {payload.weather}. "
-            f"Please run a scheduling check using your tools. "
-            f"MANDATE: You are in PROPOSAL MODE. Under no circumstances are you allowed to call the `reschedule_booking` tool. "
-            f"If this weather affects the guest's outdoor bookings on that day, you must ONLY identify indoor alternatives "
-            f"from the tours database and list them in the chat as a reschedule proposal. The user will select and confirm their choice "
-            f"using the interactive dropdown on the proposal card in the frontend UI. Do NOT execute any database updates or "
-            f"rescheduling yourself in this turn! Explain the weather reason and details of the proposal clearly, and ask for their preference.]"
-        )
-        
-        response_text, logs = run_concierge_agent(
-            guest_id=guest_id,
-            user_message=alert_prompt,
-            history=[]
-        )
-        
+        # Clear processed weather alert flag for this date if weather is sunny/normal, so it can be re-triggered later if needed
+        if payload.weather not in ["Rainy", "Heavy Rain"]:
+            db["guests"].update_many(
+                {},
+                {"$pull": {"processed_weather_alerts": payload.date}}
+            )
+
+        # 2. Automatically trigger reschedule proposals for ALL affected guests
+        trigger_automated_weather_reschedules(payload.date, payload.weather, payload.alert)
+
+        # Fetch the active guest's updated chat history to return the latest response
+        active_guest = db["guests"].find_one({"_id": guest_id})
+        agent_response = None
+        if active_guest:
+            history = active_guest.get("chat_history", [])
+            if history and history[-1]["role"] == "model":
+                agent_response = history[-1]["text"]
+
+        # Fallback if active guest wasn't affected but we still want a message
+        if not agent_response:
+            agent_response = f"I've updated our island weather logistics for {payload.date} to {payload.weather}. No rescheduling was required for your itinerary, my friend! 🌴"
+
         return {
             "message": "Weather simulated successfully.",
-            "agent_response": response_text,
-            "agent_logs": logs
+            "agent_response": agent_response,
+            "agent_logs": []
         }
     except Exception as e:
         logger.error(f"Error in weather simulation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/weather/update")
+async def update_weather_api(payload: WeatherUpdatePayload):
+    """
+    Standard automated API to update weather logistics for a specific date
+    and automatically trigger the agent's background reschedule proposal loop.
+    """
+    try:
+        wave_h = payload.wave_height
+        if wave_h is None:
+            if payload.weather == "Heavy Rain":
+                wave_h = 2.2
+            elif payload.weather == "Rainy":
+                wave_h = 1.2
+            else:
+                wave_h = 0.6
+        wave_status = "dangerous" if wave_h > 1.5 else "safe"
+        
+        db["logistics"].update_one(
+            {"date": payload.date},
+            {"$set": {
+                "weather": payload.weather,
+                "alert": payload.alert,
+                "wave_height": wave_h,
+                "wave_status": wave_status
+            }},
+            upsert=True
+        )
+        logger.info(f"Automated weather update via API for {payload.date}: {payload.weather} (Alert: {payload.alert}, Waves: {wave_h}m)")
+
+        # Clear processed alerts if sunny/normal so they can be re-triggered
+        if payload.weather not in ["Rainy", "Heavy Rain"]:
+            db["guests"].update_many(
+                {},
+                {"$pull": {"processed_weather_alerts": payload.date}}
+            )
+
+        # Automatically trigger reschedule proposals for ALL affected guests in the background
+        trigger_automated_weather_reschedules(payload.date, payload.weather, payload.alert)
+
+        return {
+            "status": "success",
+            "message": f"Weather logistics successfully updated for {payload.date}.",
+            "details": {
+                "date": payload.date,
+                "weather": payload.weather,
+                "alert": payload.alert,
+                "wave_height": wave_h,
+                "wave_status": wave_status
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error in automated weather update API: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/respond-proposal")
@@ -379,6 +556,18 @@ async def respond_proposal(payload: ProposalPayload):
             # 2. Regenerate itinerary document
             generate_itinerary(guest_id)
             
+            # Save accepted proposal to chat history
+            tour = db["tours"].find_one({"_id": payload.alternative_tour_id})
+            tour_name = tour["name"] if tour else "alternative tour"
+            response_text = f"Reschedule confirmed! I have swapped your rainy day excursion on {payload.new_date} to the indoor '{tour_name}' workshop, my friend. Your updated itinerary is now live in your Portal! 🌴"
+            
+            user_msg = {"role": "user", "text": "Approve reschedule proposal", "timestamp": datetime.datetime.now().isoformat()}
+            model_msg = {"role": "model", "text": response_text, "timestamp": datetime.datetime.now().isoformat()}
+            db["guests"].update_one(
+                {"_id": guest_id},
+                {"$push": {"chat_history": {"$each": [user_msg, model_msg]}}}
+            )
+            
             return {
                 "success": True,
                 "message": f"Proposal accepted and processed. Details: {res}"
@@ -389,6 +578,17 @@ async def respond_proposal(payload: ProposalPayload):
                 {"_id": payload.booking_id},
                 {"$set": {"status": "confirmed"}}
             )
+            
+            # Save declined proposal to chat history
+            response_text = "Respect! I have preserved your original outdoor excursion schedule, my friend. Let me know if you would like to explore any other alternatives. No stress! 🌴"
+            
+            user_msg = {"role": "user", "text": "Decline reschedule proposal", "timestamp": datetime.datetime.now().isoformat()}
+            model_msg = {"role": "model", "text": response_text, "timestamp": datetime.datetime.now().isoformat()}
+            db["guests"].update_one(
+                {"_id": guest_id},
+                {"$push": {"chat_history": {"$each": [user_msg, model_msg]}}}
+            )
+            
             return {
                 "success": False,
                 "message": "Proposal declined by guest. Booking restored to confirmed status."

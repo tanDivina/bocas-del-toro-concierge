@@ -6,7 +6,7 @@
   --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 15px var(--border-glow);
+  --shadow-glow: none;
 }
 
 /* Sunny Mode (Premium Sunset Coast - Deep Obsidian & Gold) */
@@ -34,9 +34,7 @@ body, body.theme-sunny {
   --msg-user-bg: hsla(38, 45%, 60%, 0.1);
   --msg-agent-bg: hsla(188, 55%, 38%, 0.1);
   
-  background-image: 
-    radial-gradient(at 15% 15%, var(--accent-glow) 0px, transparent 45%),
-    radial-gradient(at 85% 85%, var(--primary-glow) 0px, transparent 45%);
+  background-image: none;
 }
 
 /* Rainy Mode (Cozy Stormy Harbor - Deeper Steel Slate & Sand) */
@@ -64,9 +62,7 @@ body.theme-rainy {
   --msg-user-bg: hsla(222, 22%, 58%, 0.08);
   --msg-agent-bg: hsla(38, 35%, 50%, 0.08);
   
-  background-image: 
-    radial-gradient(at 15% 15%, var(--primary-glow) 0px, transparent 45%),
-    radial-gradient(at 85% 85%, var(--accent-glow) 0px, transparent 45%);
+  background-image: none;
 }
 
 * {
@@ -101,8 +97,8 @@ body {
 }
 
 .glass-card:hover {
-  border-color: var(--border-glow);
-  box-shadow: var(--shadow-lg), var(--shadow-glow);
+  border-color: var(--border-color);
+  box-shadow: var(--shadow-lg);
   transform: translateY(-2px);
 }
 
@@ -140,12 +136,12 @@ body {
   justify-content: center;
   gap: 8px;
   transition: var(--transition);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 2px 4px var(--primary-glow);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 4px 12px var(--border-glow);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
   filter: brightness(1.08);
 }
 
@@ -625,7 +621,7 @@ body {
 .custom-dropdown-trigger:hover,
 .custom-dropdown-trigger.active {
   border-color: var(--primary);
-  box-shadow: 0 0 10px var(--primary-glow);
+  box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
 }
 
@@ -640,7 +636,7 @@ body {
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  box-shadow: var(--shadow-lg), var(--shadow-glow);
+  box-shadow: var(--shadow-lg);
   z-index: 1000;
   padding: 6px;
   display: flex;
@@ -723,18 +719,18 @@ body {
 
 .timeline-day-card:hover {
   border-color: var(--primary) !important;
-  box-shadow: 0 4px 15px var(--primary-glow), var(--shadow-sm) !important;
+  box-shadow: var(--shadow-sm) !important;
   transform: translateY(-2px);
 }
 
 .timeline-day-card.weather-warning:hover {
   border-color: var(--warning) !important;
-  box-shadow: 0 4px 15px var(--warning-glow), var(--shadow-sm) !important;
+  box-shadow: var(--shadow-sm) !important;
 }
 
 .timeline-day-card.weather-heavy-rain:hover {
   border-color: var(--error) !important;
-  box-shadow: 0 4px 15px var(--error-glow), var(--shadow-sm) !important;
+  box-shadow: var(--shadow-sm) !important;
 }
 
 .timeline-slot-card {
@@ -751,7 +747,7 @@ body {
 .timeline-slot-card:hover {
   transform: scale(1.02) translateY(-1px);
   filter: brightness(1.15);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), 0 0 10px var(--primary-glow) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
 }
 
 .timeline-unscheduled-slot {
