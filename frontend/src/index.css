@@ -92,13 +92,13 @@ body {
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-color);
   border-radius: 16px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   transition: var(--transition);
 }
 
 .glass-card:hover {
-  border-color: var(--border-color);
-  box-shadow: var(--shadow-lg);
+  border-color: var(--primary);
+  box-shadow: none;
   transform: translateY(-2px);
 }
 
@@ -253,6 +253,10 @@ body {
   grid-template-columns: 1.25fr 1fr;
   gap: 36px;
   align-items: start;
+}
+
+.main-grid > div {
+  min-width: 0;
 }
 
 @media (max-width: 1024px) {
@@ -719,18 +723,18 @@ body {
 
 .timeline-day-card:hover {
   border-color: var(--primary) !important;
-  box-shadow: var(--shadow-sm) !important;
+  box-shadow: none !important;
   transform: translateY(-2px);
 }
 
 .timeline-day-card.weather-warning:hover {
   border-color: var(--warning) !important;
-  box-shadow: var(--shadow-sm) !important;
+  box-shadow: none !important;
 }
 
 .timeline-day-card.weather-heavy-rain:hover {
   border-color: var(--error) !important;
-  box-shadow: var(--shadow-sm) !important;
+  box-shadow: none !important;
 }
 
 .timeline-slot-card {
@@ -747,7 +751,8 @@ body {
 .timeline-slot-card:hover {
   transform: scale(1.02) translateY(-1px);
   filter: brightness(1.15);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: none !important;
+  border-color: var(--primary) !important;
 }
 
 .timeline-unscheduled-slot {

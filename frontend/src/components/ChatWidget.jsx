@@ -8,7 +8,8 @@ export default function ChatWidget({
   bookings,
   tenantBrand,
   tours = [],
-  logistics = []
+  logistics = [],
+  setShowItineraryModal
 }) {
   const [input, setInput] = useState('');
   const [selectedAlternativeId, setSelectedAlternativeId] = useState('');
@@ -90,7 +91,7 @@ export default function ChatWidget({
             borderRadius: '50%', 
             background: 'hsl(188, 55%, 38%)', 
             border: '2px solid var(--bg-color)',
-            boxShadow: '0 0 8px hsl(188, 55%, 38%)'
+            boxShadow: 'none'
           }}></span>
         </div>
         <div>
@@ -104,6 +105,48 @@ export default function ChatWidget({
             Local Butler Dispatch Active
           </div>
         </div>
+        {setShowItineraryModal && (
+          <button
+            type="button"
+            onClick={() => setShowItineraryModal(true)}
+            className="btn-primary"
+            style={{
+              marginLeft: 'auto',
+              padding: '8px 14px',
+              fontSize: '0.78rem',
+              borderRadius: '8px',
+              background: 'var(--primary)',
+              color: 'var(--primary-btn-text, #0f172a)',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: 600,
+              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+              boxShadow: 'none',
+              letterSpacing: '0.01em'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.filter = 'brightness(1.08)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.filter = 'none';
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', flexShrink: 0 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+              </svg>
+            </div>
+            Done Planning? Get QR Code
+          </button>
+        )}
       </div>
 
       {/* Messages area with scroll isolation & anchoring */}
@@ -124,7 +167,7 @@ export default function ChatWidget({
         {messages.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '16px', color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>
             {/* Elegant Welcome Palm Tree SVG */}
-            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.85, filter: 'drop-shadow(0 0 10px var(--primary))' }}>
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.85 }}>
               <path d="M12 22c1-4 1-8 0-12" />
               <path d="M5 22c2-.5 12-.5 14 0" />
               <path d="M12 10c-3-2-7-1-9 2" />
@@ -328,7 +371,7 @@ export default function ChatWidget({
                             padding: '12px 16px', 
                             fontSize: '0.8rem',
                             background: 'var(--primary)',
-                            boxShadow: '0 4px 12px var(--primary-glow)',
+                            boxShadow: 'none',
                             color: 'var(--primary-btn-text, #0f172a)',
                             display: 'flex',
                             alignItems: 'center',

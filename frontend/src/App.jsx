@@ -5,6 +5,8 @@ import ChatWidget from './components/ChatWidget';
 import ControlPanel from './components/ControlPanel';
 import ItineraryDoc from './components/ItineraryDoc';
 import ErrorBoundary from './components/ErrorBoundary';
+import WeatherHorizon from './components/WeatherHorizon';
+
 
 
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -167,7 +169,7 @@ function App() {
   // Manual Check-in Form States
   const [manualName, setManualName] = useState('');
   const [manualPhone, setManualPhone] = useState('');
-  const [manualHotel, setManualHotel] = useState('hotel_lacoralina');
+  const [manualHotel, setManualHotel] = useState('hotel_nayara');
   const [manualStayStart, setManualStayStart] = useState(new Date().toISOString().split('T')[0]);
   const [manualStayEnd, setManualStayEnd] = useState(new Date(Date.now() + 259200000).toISOString().split('T')[0]);
   const [manualNotes, setManualNotes] = useState('');
@@ -458,8 +460,16 @@ function App() {
         setTours(data.tours || []);
         setLogistics(data.logistics || []);
         setGuests(data.guests || []);
-        setTenantBrand(data.tenant_brand || null);
+        const brand = data.tenant_brand || null;
+        setTenantBrand(brand);
         setTenantsList(data.tenants || []);
+
+        // Dynamically sync manualHotel selection to the current guest's active brand
+        if (brand && brand._id) {
+          setManualHotel(brand._id);
+        } else if (data.guest_id && DEFAULT_GUEST_BRANDS[data.guest_id]) {
+          setManualHotel(DEFAULT_GUEST_BRANDS[data.guest_id]);
+        }
         
         if (data.guest_id) {
           if (data.guest_id !== guestId) {
@@ -476,16 +486,7 @@ function App() {
         }
         
         const newMarkdown = data.itinerary_markdown || '';
-        setItineraryMarkdown(prev => {
-          // Trigger the updated itinerary popup modal ONLY if the guest ID remains the same
-          // (This avoids triggering the modal merely when switching active guest profiles)
-          if (lastGuestIdRef.current === data.guest_id) {
-            if (prev && newMarkdown && prev !== newMarkdown) {
-              setShowItineraryModal(true);
-            }
-          }
-          return newMarkdown;
-        });
+        setItineraryMarkdown(newMarkdown);
         
         // Update our guest tracker ref with the newly loaded guest ID
         if (data.guest_id) {
@@ -1076,7 +1077,7 @@ function App() {
           border: '1.5px solid var(--primary)',
           borderRadius: '12px',
           padding: '16px 20px',
-          boxShadow: '0 10px 30px var(--primary-glow)',
+          boxShadow: 'var(--shadow-lg)',
           zIndex: 99999,
           display: 'flex',
           alignItems: 'center',
@@ -1132,7 +1133,7 @@ function App() {
                     />
                   </div>
                 ) : (
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)', flexShrink: 0, filter: 'drop-shadow(0 0 8px var(--primary))' }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)', flexShrink: 0 }}>
                     <path d="M12 22c1-4 1-8 0-12" />
                     <path d="M5 22c2-.5 12-.5 14 0" />
                     <path d="M12 10c-3-2-7-1-9 2" />
@@ -1223,7 +1224,7 @@ function App() {
                     />
                   </div>
                 ) : (
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)', flexShrink: 0, filter: 'drop-shadow(0 0 8px var(--primary))' }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)', flexShrink: 0 }}>
                     <path d="M12 22c1-4 1-8 0-12" />
                     <path d="M5 22c2-.5 12-.5 14 0" />
                     <path d="M12 10c-3-2-7-1-9 2" />
@@ -1259,7 +1260,7 @@ function App() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span style={{ 
-                background: isRealMongo ? 'rgba(16, 185, 129, 0.08)' : 'rgba(212, 175, 55, 0.08)', 
+                background: isRealMongo ? 'rgba(16, 185, 129, 0.08)' : 'var(--primary-glow)', 
                 color: isRealMongo ? '#10b981' : 'var(--primary)', 
                 border: `1px solid ${isRealMongo ? 'rgba(16, 185, 129, 0.25)' : 'var(--border-color)'}`, 
                 padding: '6px 14px', 
@@ -1275,8 +1276,7 @@ function App() {
                   width: '6px',
                   height: '6px',
                   borderRadius: '50%',
-                  background: isRealMongo ? '#10b981' : 'var(--primary)',
-                  boxShadow: isRealMongo ? '0 0 8px #10b981' : '0 0 8px var(--primary)'
+                  background: isRealMongo ? '#10b981' : 'var(--primary)'
                 }}></span>
                 {isRealMongo ? 'MONGO ATLAS LIVE' : 'LOCAL SANDBOX DB'}
               </span>
@@ -1432,7 +1432,7 @@ function App() {
                         alignItems: 'center',
                         gap: '8px',
                         transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                        boxShadow: isActive ? '0 4px 12px var(--primary-glow)' : 'none'
+                        boxShadow: isActive ? '0 4px 12px rgba(0, 0, 0, 0.25)' : 'none'
                       }}
                       onMouseEnter={(e) => {
                         if (!isActive) {
@@ -1540,7 +1540,7 @@ function App() {
               <div className="glass-card feature-item">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div className="feature-icon-wrapper">
-                    <svg width="22" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 6px var(--primary))' }}>
+                    <svg width="22" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 22c1-4 1-8 0-12" />
                       <path d="M5 22c2-.5 12-.5 14 0" />
                       <path d="M12 10c-3-2-7-1-9 2" />
@@ -1617,7 +1617,7 @@ function App() {
                     cursor: 'pointer', 
                     border: archActiveLayer === 'frontend' ? '1.5px solid var(--primary)' : '1px solid var(--border-color)',
                     background: archActiveLayer === 'frontend' ? 'rgba(var(--primary-rgb), 0.08)' : 'rgba(255,255,255,0.01)',
-                    boxShadow: archActiveLayer === 'frontend' ? '0 0 15px var(--primary-glow)' : 'none',
+                    boxShadow: 'none',
                     transition: 'all 0.25s ease',
                     position: 'relative',
                     overflow: 'hidden'
@@ -1652,7 +1652,7 @@ function App() {
                     cursor: 'pointer', 
                     border: archActiveLayer === 'gateway' ? '1.5px solid var(--primary)' : '1px solid var(--border-color)',
                     background: archActiveLayer === 'gateway' ? 'rgba(var(--primary-rgb), 0.08)' : 'rgba(255,255,255,0.01)',
-                    boxShadow: archActiveLayer === 'gateway' ? '0 0 15px var(--primary-glow)' : 'none',
+                    boxShadow: 'none',
                     transition: 'all 0.25s ease'
                   }}
                 >
@@ -1684,7 +1684,7 @@ function App() {
                     cursor: 'pointer', 
                     border: archActiveLayer === 'brain' ? '1.5px solid var(--primary)' : '1px solid var(--border-color)',
                     background: archActiveLayer === 'brain' ? 'rgba(var(--primary-rgb), 0.08)' : 'rgba(255,255,255,0.01)',
-                    boxShadow: archActiveLayer === 'brain' ? '0 0 15px var(--primary-glow)' : 'none',
+                    boxShadow: 'none',
                     transition: 'all 0.25s ease'
                   }}
                 >
@@ -1715,7 +1715,7 @@ function App() {
                     cursor: 'pointer', 
                     border: archActiveLayer === 'mcp' ? '1.5px solid var(--primary)' : '1px solid var(--border-color)',
                     background: archActiveLayer === 'mcp' ? 'rgba(var(--primary-rgb), 0.08)' : 'rgba(255,255,255,0.01)',
-                    boxShadow: archActiveLayer === 'mcp' ? '0 0 15px var(--primary-glow)' : 'none',
+                    boxShadow: 'none',
                     transition: 'all 0.25s ease'
                   }}
                 >
@@ -1748,7 +1748,7 @@ function App() {
                     cursor: 'pointer', 
                     border: archActiveLayer === 'database' ? '1.5px solid var(--primary)' : '1px solid var(--border-color)',
                     background: archActiveLayer === 'database' ? 'rgba(var(--primary-rgb), 0.08)' : 'rgba(255,255,255,0.01)',
-                    boxShadow: archActiveLayer === 'database' ? '0 0 15px var(--primary-glow)' : 'none',
+                    boxShadow: 'none',
                     transition: 'all 0.25s ease'
                   }}
                 >
@@ -1785,7 +1785,7 @@ function App() {
                       background: archActiveLayer === 'all' ? 'var(--primary)' : 'rgba(255,255,255,0.03)',
                       color: archActiveLayer === 'all' ? '#000000' : 'var(--text-primary)',
                       border: archActiveLayer === 'all' ? '1px solid var(--primary)' : '1px solid var(--border-color)',
-                      boxShadow: archActiveLayer === 'all' ? '0 0 10px var(--primary-glow)' : 'none'
+                      boxShadow: 'none'
                     }}
                   >
                     🔍 View System Flow Summary
@@ -1806,11 +1806,11 @@ function App() {
                       IslandFlow shifts AI travel coordinators out of plain conversation models into an active, contextual stay manager. It binds React portals, FastAPI, Google's ADK, and MongoDB Atlas.
                     </p>
                     <div style={{ borderLeft: '3px solid var(--primary)', paddingLeft: '14px', background: 'rgba(255,255,255,0.01)', borderRadius: '0 8px 8px 0', padding: '10px 14px' }}>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '4px' }}>How data moves during weather shifts:</div>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '4px' }}>How data moves during weather shifts (Automated):</div>
                       <ol style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <li>A resort manager sets May 30 to "Heavy Rain" in the Operator console.</li>
-                        <li>FastAPI receives the status modification and commits it to MongoDB.</li>
-                        <li>The backend executes a background check through the Google ADK model.</li>
+                        <li>OpenWeatherMap API or an IoT reef sensor transmits a live weather/swell alert (simulated in the Operator console for testing).</li>
+                        <li>FastAPI receives the weather/swell shift and automatically commits it to MongoDB.</li>
+                        <li>The backend triggers an automated background check through the Google ADK model.</li>
                         <li>Gemini uses `check_weather` and `get_bookings` to scan for outdoor conflicts.</li>
                         <li>Finding a slot conflict, Gemini queries `get_tours` for indoor options.</li>
                         <li>Gemini creates a rescheduling swap payload, rendering a card in the chat.</li>
@@ -2068,9 +2068,10 @@ function App() {
       {/* Render Guest Portal View */}
       {view === 'guest' && (
         <div className="main-grid">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', viewTransitionName: 'schedule-view' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0, viewTransitionName: 'schedule-view' }}>
+            <WeatherHorizon logistics={logistics} />
             <ScheduleView bookings={bookings} tours={tours} logistics={logistics} guestId={guestId} />
-            <ItineraryDoc itineraryMarkdown={itineraryMarkdown} guestId={guestId} />
+            <ItineraryDoc itineraryMarkdown={itineraryMarkdown} guestId={guestId} setShowItineraryModal={setShowItineraryModal} />
           </div>
           <div style={{ viewTransitionName: 'chat-widget' }}>
             <ChatWidget 
@@ -2082,6 +2083,7 @@ function App() {
               tenantBrand={tenantBrand}
               tours={tours}
               logistics={logistics}
+              setShowItineraryModal={setShowItineraryModal}
             />
           </div>
         </div>
@@ -2090,7 +2092,8 @@ function App() {
       {/* Render Operator Console View */}
       {view === 'operator' && (
         <div className="main-grid">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', viewTransitionName: 'schedule-view' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0, viewTransitionName: 'schedule-view' }}>
+            <WeatherHorizon logistics={logistics} />
             <ScheduleView bookings={bookings} tours={tours} logistics={logistics} guestId={guestId} />
             
             {/* Onboarding Welcome Flyer Generator */}
@@ -2214,7 +2217,7 @@ function App() {
                     alignItems: 'center',
                     gap: '6px',
                     transition: 'var(--transition)',
-                    boxShadow: isSecureMode ? '0 0 10px var(--border-glow)' : 'none'
+                    boxShadow: 'none'
                   }}
                 >
                   <span style={{
@@ -2537,7 +2540,7 @@ function App() {
                   <div style={{ background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', position: 'relative' }}>
                     <div style={{ position: 'absolute', top: '12px', right: '12px', fontSize: '1.5rem', fontWeight: 900, color: 'rgba(255,255,255,0.03)', fontFamily: 'var(--font-serif)' }}>04</div>
                     <div style={{ color: 'var(--primary)', background: 'var(--primary-glow)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 6px var(--primary))' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 22c1-4 1-8 0-12" />
                         <path d="M5 22c2-.5 12-.5 14 0" />
                         <path d="M12 10c-3-2-7-1-9 2" />
@@ -2661,7 +2664,7 @@ function App() {
                               flexDirection: 'column',
                               gap: '8px',
                               position: 'relative',
-                              boxShadow: isSelected ? `0 0 15px ${previewGlow}` : 'none',
+                              boxShadow: 'none',
                               transform: isSelected ? 'scale(1.02)' : 'none'
                             }}
                           >
@@ -2673,7 +2676,7 @@ function App() {
                                 background: 'rgba(0,0,0,0.3)',
                                 border: '1.5px solid',
                                 borderColor: isSelected ? accentColor : 'rgba(255,255,255,0.1)',
-                                boxShadow: isSelected ? `0 0 10px ${accentColor}` : 'none',
+                                boxShadow: 'none',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -2694,7 +2697,7 @@ function App() {
                                     }}
                                   />
                                 ) : (
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, filter: `drop-shadow(0 0 6px ${accentColor})` }}>
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                                     <path d="M12 22c1-4 1-8 0-12" />
                                     <path d="M5 22c2-.5 12-.5 14 0" />
                                     <path d="M12 10c-3-2-7-1-9 2" />
@@ -2753,20 +2756,7 @@ function App() {
                               </span>
                             </div>
 
-                            {/* Decorative Corner Glow */}
-                            {isSelected && (
-                              <div style={{
-                                position: 'absolute',
-                                bottom: 0,
-                                right: 0,
-                                width: '30px',
-                                height: '30px',
-                                background: accentColor,
-                                filter: 'blur(20px)',
-                                opacity: 0.3,
-                                pointerEvents: 'none'
-                              }} />
-                            )}
+
                           </div>
                         );
                       })}
@@ -3102,7 +3092,7 @@ function App() {
                       alignItems: 'center',
                       gap: '14px',
                       position: 'relative',
-                      boxShadow: '0 8px 24px var(--primary-glow)'
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)'
                     }}>
                       <div style={{
                         position: 'absolute',
@@ -3176,16 +3166,16 @@ function App() {
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '8px',
-                          boxShadow: '0 4px 14px var(--primary-glow)',
+                          boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
                           transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'translateY(-1px)';
-                          e.currentTarget.style.boxShadow = '0 6px 20px var(--primary-glow)';
+                          e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.4)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 4px 14px var(--primary-glow)';
+                          e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.3)';
                         }}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -4467,7 +4457,7 @@ function App() {
                                       background: isPending ? 'rgba(245, 158, 11, 0.12)' : (isWhatsApp ? 'rgba(16, 185, 129, 0.12)' : 'rgba(56, 189, 248, 0.12)'),
                                       color: isPending ? '#f59e0b' : (isWhatsApp ? '#10b981' : '#38bdf8'),
                                       border: `1px solid ${isPending ? '#f59e0b' : (isWhatsApp ? '#10b981' : '#38bdf8')}`,
-                                      boxShadow: !isPending ? `0 0 8px ${isWhatsApp ? 'rgba(16, 185, 129, 0.2)' : 'rgba(56, 189, 248, 0.2)'}` : 'none'
+                                      boxShadow: 'none'
                                     }}>
                                       <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isPending ? '#f59e0b' : (isWhatsApp ? '#10b981' : '#38bdf8'), display: 'inline-block' }}></span>
                                       {isPending ? 'PENDING DISPATCH' : (isWhatsApp ? 'DELIVERED (WhatsApp)' : 'SYNCED (Webhook)')}

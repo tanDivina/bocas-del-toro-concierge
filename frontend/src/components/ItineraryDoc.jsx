@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ItineraryDoc({ itineraryMarkdown, guestId = "g1" }) {
+export default function ItineraryDoc({ itineraryMarkdown, guestId = "g1", setShowItineraryModal }) {
   const renderMarkdown = (md) => {
     if (!md) {
       return (
@@ -80,26 +80,53 @@ export default function ItineraryDoc({ itineraryMarkdown, guestId = "g1" }) {
           Generated Document View
         </h2>
         {itineraryMarkdown && (
-          <button 
-            className="btn-secondary" 
-            onClick={() => window.print()} 
-            style={{ 
-              padding: '8px 12px', 
-              fontSize: '0.8rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 6 2 18 2 18 9" />
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                <rect x="6" y="14" width="12" height="8" />
-              </svg>
-            </div>
-            Print Itinerary
-          </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button 
+              className="btn-secondary" 
+              onClick={() => window.print()} 
+              style={{ 
+                padding: '8px 12px', 
+                fontSize: '0.8rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 6 2 18 2 18 9" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                  <rect x="6" y="14" width="12" height="8" />
+                </svg>
+              </div>
+              Print Itinerary
+            </button>
+            {setShowItineraryModal && (
+              <button 
+                className="btn-primary" 
+                onClick={() => setShowItineraryModal(true)} 
+                style={{ 
+                  padding: '8px 12px', 
+                  fontSize: '0.8rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'var(--primary)',
+                  color: 'var(--primary-btn-text, #0f172a)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                  </svg>
+                </div>
+                Get Phone QR Code
+              </button>
+            )}
+          </div>
         )}
       </div>
 

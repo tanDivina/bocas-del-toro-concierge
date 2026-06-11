@@ -81,6 +81,7 @@ export default function ControlPanel({
   agentLogs, 
   loading 
 }) {
+  const [isProductionMode, setIsProductionMode] = useState(true);
   const [selectedWaveHeight, setSelectedWaveHeight] = useState(2.2);
 
   const sortedLogistics = logistics ? [...logistics].sort((a, b) => a.date.localeCompare(b.date)) : [];
@@ -135,138 +136,269 @@ export default function ControlPanel({
           Operator Control Panel
         </h2>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-          Simulate weather shifts and watch the agent coordinate logistics.
+          Configure operational data state rules and track automated coordination.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Target Date</label>
-            <select 
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              style={{
-                background: 'var(--slot-bg)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                color: 'var(--text-primary)',
-                padding: '8px',
-                fontSize: '0.9rem',
-                transition: 'background-color 0.8s ease, color 0.5s ease'
-              }}
-            >
-              {sortedLogistics.map(log => (
-                <option key={log.date} value={log.date}>{log.date}</option>
-              ))}
-            </select>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Weather Forecast</label>
-            <select 
-              value={selectedWeather}
-              onChange={(e) => setSelectedWeather(e.target.value)}
-              style={{
-                background: 'var(--slot-bg)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                color: 'var(--text-primary)',
-                padding: '8px',
-                fontSize: '0.9rem',
-                transition: 'background-color 0.8s ease, color 0.5s ease'
-              }}
-            >
-              <option value="Sunny">Sunny</option>
-              <option value="Rainy">Light Rain</option>
-              <option value="Heavy Rain">Heavy Rain (Storm Warning)</option>
-            </select>
-          </div>
+      {/* Operation Mode Toggle Switch */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: 'rgba(255,255,255,0.02)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '10px',
+        padding: '10px 14px',
+        gap: '12px'
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+          <span style={{ fontSize: '0.82rem', fontWeight: 650, color: 'var(--text-primary)' }}>Operation Mode</span>
+          <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: '1.3', marginTop: '2px' }}>
+            {isProductionMode ? '🟢 Live IoT Feed: Streaming programmatic telemetry' : 'Sandbox mode for manual testing simulations'}
+          </span>
         </div>
+        <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.25)', borderRadius: '8px', padding: '3px', border: '1px solid rgba(255,255,255,0.03)', flexShrink: 0 }}>
+          <button 
+            type="button"
+            onClick={() => {
+              setIsProductionMode(false);
+            }}
+            style={{
+              padding: '6px 10px',
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              borderRadius: '6px',
+              border: 'none',
+              background: !isProductionMode ? 'var(--primary)' : 'transparent',
+              color: !isProductionMode ? '#000' : 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'var(--transition)'
+            }}
+          >
+            Sandbox
+          </button>
+          <button 
+            type="button"
+            onClick={() => {
+              setIsProductionMode(true);
+              onReset(); // Reset to clear simulation overrides and fall back to live API
+            }}
+            style={{
+              padding: '6px 10px',
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              borderRadius: '6px',
+              border: 'none',
+              background: isProductionMode ? '#10b981' : 'transparent',
+              color: isProductionMode ? '#000' : 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'var(--transition)'
+            }}
+          >
+            Live IoT Feed
+          </button>
+        </div>
+      </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '12px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Weather Alert Status</label>
-            <select 
-              value={selectedAlert}
-              onChange={(e) => setSelectedAlert(e.target.value)}
-              style={{
-                background: 'var(--slot-bg)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                color: 'var(--text-primary)',
-                padding: '8px',
-                fontSize: '0.9rem',
-                transition: 'background-color 0.8s ease, color 0.5s ease'
-              }}
-            >
-              <option value="none">None (Optimal Conditions)</option>
-              <option value="rain_warning">Rain Warning (Trigger Replan)</option>
-            </select>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Wave Height: {selectedWaveHeight.toFixed(1)}m</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input 
-                type="range" 
-                min="0.2" 
-                max="3.0" 
-                step="0.1" 
-                value={selectedWaveHeight}
-                onChange={(e) => setSelectedWaveHeight(parseFloat(e.target.value))}
-                style={{ flex: 1, accentColor: 'var(--primary)', height: '5px', cursor: 'pointer' }}
-              />
-            </div>
-            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: selectedWaveHeight > 1.5 ? 'var(--error)' : 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-              {selectedWaveHeight > 1.5 ? '⚠️ High Waves' : '🟢 Safe Seas'}
+      {isProductionMode ? (
+        <div style={{
+          background: 'rgba(16, 185, 129, 0.03)',
+          border: '1px solid rgba(16, 185, 129, 0.15)',
+          borderRadius: '12px',
+          padding: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '14px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span className="live-pulse" style={{
+              display: 'inline-block',
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: '#10b981'
+            }}></span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Live Telemetry Stream Active
             </span>
           </div>
-        </div>
 
-        <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
-          <button 
-            type="submit" 
-            className="btn-primary" 
-            disabled={loading}
-            style={{ flex: 1, justifyContent: 'center' }}
-          >
-            {loading ? 'Simulating...' : (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 8.58" />
-                    <polyline points="13 11 9 17 12 17 10 23" />
-                  </svg>
-                </div>
-                Trigger Weather Shift
-              </span>
-            )}
-          </button>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.5' }}>
+            The system is actively connected to live programmatic feeds. Manual simulation triggers are bypassed in favor of real-world physical indices for Bocas del Toro coordinates (9.3403° N, 82.2420° W).
+          </p>
+
+          <div style={{ borderLeft: '2px solid var(--primary)', paddingLeft: '12px', display: 'flex', flexDirection: 'column', gap: '6px', margin: '4px 0' }}>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', fontWeight: 600, letterSpacing: '0.04em' }}>ACTIVE API CHANNELS</div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ color: '#10b981' }}>✓</span> OpenWeatherMap API <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: '0.7rem' }}>(Live Weather Code Stream)</span>
+            </div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ color: '#10b981' }}>✓</span> Open-Meteo Marine API <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: '0.7rem' }}>(Real-time Reef Swells)</span>
+            </div>
+          </div>
+
+          <div style={{
+            background: 'rgba(0,0,0,0.15)',
+            border: '1px solid rgba(255,255,255,0.02)',
+            borderRadius: '8px',
+            padding: '10px',
+            fontSize: '0.75rem',
+            color: 'var(--text-muted)',
+            lineHeight: '1.4'
+          }}>
+            💡 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Autonomic Action</span>: A background cron worker automatically executes a telemetry poll check every 10 minutes. If rain warning codes or waves &gt; 1.5m are flagged on stay dates, Gemini launches instant rescheduling swap cards.
+          </div>
           
           <button 
             type="button" 
-            className="btn-secondary" 
-            onClick={onReset}
-            disabled={loading}
-            style={{ 
-              borderColor: 'var(--error)', 
-              color: 'var(--error)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px'
+            className="btn-primary" 
+            onClick={() => {
+              onReset();
             }}
+            disabled={loading}
+            style={{ width: '100%', justifyContent: 'center', background: '#10b981', border: 'none', color: '#000', fontSize: '0.8rem', fontWeight: 650, height: '36px' }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                <polyline points="3 3 3 8 8 8" />
-              </svg>
-            </div>
-            Reset DB
+            {loading ? 'Polling Telemetry...' : 'Force Live API Poll Sync'}
           </button>
         </div>
-      </form>
+      ) : (
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Target Date</label>
+              <select 
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                style={{
+                  background: 'var(--slot-bg)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)',
+                  padding: '8px',
+                  fontSize: '0.9rem',
+                  transition: 'background-color 0.8s ease, color 0.5s ease'
+                }}
+              >
+                {sortedLogistics.map(log => (
+                  <option key={log.date} value={log.date}>{log.date}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Weather Forecast</label>
+              <select 
+                value={selectedWeather}
+                onChange={(e) => setSelectedWeather(e.target.value)}
+                style={{
+                  background: 'var(--slot-bg)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)',
+                  padding: '8px',
+                  fontSize: '0.9rem',
+                  transition: 'background-color 0.8s ease, color 0.5s ease'
+                }}
+              >
+                <option value="Sunny">Sunny</option>
+                <option value="Rainy">Light Rain</option>
+                <option value="Heavy Rain">Heavy Rain (Storm Warning)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Weather Alert Status</label>
+              <select 
+                value={selectedAlert}
+                onChange={(e) => setSelectedAlert(e.target.value)}
+                style={{
+                  background: 'var(--slot-bg)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)',
+                  padding: '8px',
+                  fontSize: '0.9rem',
+                  transition: 'background-color 0.8s ease, color 0.5s ease'
+                }}
+              >
+                <option value="none">None (Optimal Conditions)</option>
+                <option value="rain_warning">Rain Warning (Trigger Replan)</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Wave Height: {selectedWaveHeight.toFixed(1)}m</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input 
+                  type="range" 
+                  min="0.2" 
+                  max="3.0" 
+                  step="0.1" 
+                  value={selectedWaveHeight}
+                  onChange={(e) => setSelectedWaveHeight(parseFloat(e.target.value))}
+                  style={{ flex: 1, accentColor: 'var(--primary)', height: '5px', cursor: 'pointer' }}
+                />
+              </div>
+              <span style={{ fontSize: '0.68rem', fontWeight: 600, color: selectedWaveHeight > 1.5 ? 'var(--error)' : 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                {selectedWaveHeight > 1.5 ? '⚠️ High Waves' : '🟢 Safe Seas'}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              disabled={loading}
+              style={{ flex: 1, justifyContent: 'center' }}
+            >
+              {loading ? 'Simulating...' : (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 8.58" />
+                      <polyline points="13 11 9 17 12 17 10 23" />
+                    </svg>
+                  </div>
+                  Trigger Weather Shift
+                </span>
+              )}
+            </button>
+            
+            <button 
+              type="button" 
+              className="btn-secondary" 
+              onClick={onReset}
+              disabled={loading}
+              style={{ 
+                borderColor: 'var(--error)', 
+                color: 'var(--error)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <polyline points="3 3 3 8 8 8" />
+                </svg>
+              </div>
+              Reset DB
+            </button>
+          </div>
+        </form>
+      )}
+
+      <style>{`
+        @keyframes pulse-dot {
+          0% { transform: scale(0.95); opacity: 0.6; }
+          50% { transform: scale(1.15); opacity: 1; }
+          100% { transform: scale(0.95); opacity: 0.6; }
+        }
+      `}</style>
 
       <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
         <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Active Weather Board</h3>
